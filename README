@@ -1,0 +1,142 @@
+
+  ***********************************************
+  ***_______*****_________****_______****___******
+  **|\   _  \***|\   _____\**/\__   _\**|\  \******
+  **\ \  \\  \**\ \  \____|**\/_ \  \/**\ \  \******
+  ***\ \  \\  \**\ \  \_____****\ \  \***\ \  \******
+   ***\ \  ___/***\ \____   \****\ \  \***\ \  \******
+    ***\ \ \_/*****\/____|\  \****\ \  \***\ \  \******
+     ***\ \ \*********____\\  \****\_\  \_**\ \  \_____*
+      ***\ \_\*******/\________\**/\      \**\ \_______\*
+       ***\/_/*******\/________/**\/______/***\/_______/*
+        *************************************************
+
+
+PSIL:
+Stands for Programming Some Idiotic Lisp.
+(It's actually based on Scheme Syntax)
+
+PSIL is a WIP compiler for my own version of a LISP like language
+
+written by Sinclair Gurny
+Starting in July 2019
+
+================================================================================================
+
+Compiling:
+make - for normal
+make debug - full parsing output with delay
+make clean - delete unnecessary files
+
+Running:
+./psil
+
+REPL Commands:
+quit - exits
+exit - also exits
+help - displays commands
+psil - displays syntax of current version of PSIL
+
+=================================================================================================
+
+Syntax:
+<program> -> <form>*
+<form>    -> <definition> | <expression>
+
+DEFINITIONS:
+<definition>      -> <variable_def>
+		  | (begin <def>*)
+
+<variable def>   -> (define <variable> <expr>)
+
+<variable>       -> <identifier>
+<body>           -> <definition>* <expression>+
+
+EXPRESSIONS:
+<expression>     -> <constant>
+                 |  <variable>
+		 |  (quote <datum>)
+		 |  (lambda <formals> <body>)
+		 |  (if <expression> <expression> <expression>) | (if <expression> <expression>)
+		 |  (set! <variable> <expression>)
+		 |  <application>
+
+<constant>       -> <boolean> | <number> | <character>
+<formals>        -> <variable> | (<variable>*)
+<application>    -> (<expression> <expression>*)
+
+IDENTIFIERS:
+<identifier> -> <initial> <subsequent>* | + | - | ... // Rest of valid operators
+<initial>    -> <letter> | ! | $ | % | & | *  | < | = | > | ? | _
+<subsequent> -> <initial> | <digit> | _
+<letter>     -> a | b | ... | z
+<digit>      -> 0 | 1 | ... | 9
+
+DATA:
+<datum>        -> <boolean> | <number> | <character> | <symbol> | <list>
+<boolean>      -> #t | #f
+<character>    -> #\<any char> | #\newline | #\space
+<symbol>       -> <identifier>
+<list>         -> (<datum>*)
+
+NUMBERS:
+<number>  -> <integer> | <decimal>
+<integer> -> <sign> <digit>+
+<decimal> -> <sign> <digit>+ . <digit>+
+<sign>    -> + | -
+
+
+=====================================================================================================
+
+Standard Forms: ===================
+
+DEFINITION:
+define
+
+BINDING CONSTRUCTS:
+lambda, let
+
+CONDITIONAL EVALUATION:
+if, cond, and, or
+
+SEQUENTIAL EVALUATION:
+begin
+
+ITERATION:
+lambda
+
+QUOTING:
+quote, unquote
+
+ASSIGNMENT:
+set!
+
+Standard Procedures: ===============
+
+EQUIVALENCE PREDICATES:
+equal?, string=?, char=?
+
+NUMBERS:
+ ARITHMETIC:
+  +, -, *, /, abs, mod
+ APPROX:
+  floor, ceiling, truncate, round
+ INEQUALITIES:
+  <, <=, >, >=, =
+ MISC:
+  zero?, negative?, positive?
+
+CHARACTERS:
+char=?, char<?, char<=?, char>?, char>=?, char>?,
+
+LISTS:
+list, first, second, first!, second!, null?
+
+IDENTITY PREDICATES:
+boolean?, symbol?, number?, char?, string?, func?
+
+INPUT/OUTPUT:
+print, newline, read
+
+BOOLEANS:
+boolean?, not
