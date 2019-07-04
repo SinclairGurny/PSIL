@@ -43,7 +43,7 @@ int main( int argc, char ** argv ) {
   // === Setup ===
   signal( SIGINT, exitHandler);
   // Make PSIL Language
-  psil::language_ptr psil_lang = psil::make_psil_lang();
+  std::shared_ptr<psil::language_t> psil_lang = psil::make_psil_lang();
   
   // === REPL ===
   while ( true ) {
@@ -52,21 +52,18 @@ int main( int argc, char ** argv ) {
     add_history( buffer );
 
     std::string tmp_buf(buffer);
+    free(buffer);
     
     if ( tmp_buf == "exit" || tmp_buf == "quit") {
       // === Delete memory and exit ===
-      free(buffer);
-      delete_lang( psil_lang );
       exit(0);
     } else if ( tmp_buf == "psil" ) {
       // === Display PSIL Syntax ===
-      lang_print( psil_lang );
-      free(buffer);
+      psil_lang->print();
       continue;
     } else if ( tmp_buf == "help" ) {
       std::cout << "psil - prints PSIL language syntax\n"
 		<< "exit/quit - exits PSIL REPL" << std::endl;
-      free(buffer);
       continue;
     }
 
@@ -74,9 +71,7 @@ int main( int argc, char ** argv ) {
     tk_print( out );
     out.reset();
     
-    std::cout << "You entered: " << buffer << std::endl;
-
-    free(buffer);
+    std::cout << "You entered: " << tmp_buf << std::endl;
   }
 
   return 0;

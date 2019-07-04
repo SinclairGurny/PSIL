@@ -1,6 +1,6 @@
 /**
    psil_parser.h
-   PSIL Parser libary 
+   PSIL Parser library 
    @author Sinclair Gurny
    @version 0.1
    July 2019
@@ -26,34 +26,22 @@ namespace psil {
 
   // ===== Struct forward declarations =====
 
-  struct token_st;
-  struct token_elem_st;
-  struct language_st;
-  struct lang_elem_st;
-  struct parser_st;
-  struct group_st;
+  struct token_t;
+  struct token_elem_t;
+  struct language_t;
+  struct lang_elem_t;
+  struct parser_t;
+  struct group_t;
 
   // ====== Typedefs =============
-
-  // === Shortening of struct names
-  typedef struct token_st token_t;
-  typedef struct token_elem_st token_elem_t;
-  typedef struct language_st language_t;
-  typedef struct lang_elem_st lang_elem_t;
-  typedef struct parser_st parser_t;
-  typedef struct group_st group_t;
 
   // === Typedef of struct pointers
   typedef std::shared_ptr<token_t> token_ptr;
   typedef std::shared_ptr<token_elem_t> token_elem_ptr;
-  typedef std::shared_ptr<parser_t> parser_ptr;
-  typedef std::shared_ptr<group_t> group_ptr;
-  typedef std::shared_ptr<lang_elem_t> lang_elem_ptr;
-  typedef std::shared_ptr<language_t> language_ptr;
 
   // === Other typedefs
-  typedef std::vector<std::string> str_vec;
-  typedef std::pair<size_t, size_t> upoint;
+  using str_vec = std::vector<std::string>;
+  using upoint = std::pair<size_t, size_t>;
   
   // ===== Token =======================================
 
@@ -62,10 +50,11 @@ namespace psil {
      Holds either a string or another token
      Is used in the aspects vector in the token struct
      type: true - object holds a string, false - object holds a token
-   */
-  struct token_elem_st {
-    token_elem_st( std::string s ) : type(true), str(s) {}
-    token_elem_st( token_ptr p ) : type(false), tk(p) {}
+  */
+  struct token_elem_t {
+    token_elem_t( std::string s ) : type(true), str(s) {}
+    token_elem_t( token_ptr p ) : type(false), tk(p) {}
+    ~token_elem_t() {}
     
     bool type;
     std::string str;
@@ -76,7 +65,7 @@ namespace psil {
      Token
      Represents the nodes in the abstract syntax tree
   */
-  struct token_st {
+  struct token_t {
     std::string type;
     std::vector<token_elem_ptr > aspects;
   };
@@ -89,10 +78,15 @@ namespace psil {
      Holds list of rules for each named leaf 
        category of the language tree
   */
-  struct parser_st {
-    language_ptr lang;
+  struct parser_t {
+    parser_t( std::string n ) : name(n) {}
+    parser_t( std::string n, std::string rs );
+    ~parser_t() {}
+    
     std::string name;
     std::vector<str_vec> rules;
+
+    void print( int depth );
   };
 
   // ===== Parser Group =================================
@@ -102,13 +96,14 @@ namespace psil {
      Used to organize language structure
      Holds map of language element pointers
   */
-  struct group_st {
-    std::shared_ptr<language_t> lang;
-    std::string name;
-    std::map<std::string, lang_elem_ptr > items;
+  struct group_t {
+    group_t( std::string n ) : name(n) {}
+    ~group_t();
 
-    void add_group( std::string s, group_ptr g );
-    void add_parser( std::string s, parser_ptr p );
+    std::string name;
+    std::vector<std::unique_ptr<lang_elem_t> > items;
+
+    void print( int depth );
   };
 
   // ===== Parser Language ==============================
@@ -120,12 +115,15 @@ namespace psil {
 
      type - true -> holds parser, false -> holds group
   */
-  struct lang_elem_st {
-    lang_elem_st( parser_ptr _p ) : type(true), p(_p) {}
-    lang_elem_st( group_ptr _g ) : type(false), g(_g) {}
+  struct lang_elem_t {
+    lang_elem_t( std::shared_ptr<parser_t> _p ) : type(true), p(_p) {}
+    lang_elem_t( group_t * _g ) : type(false), g(_g) {}
+    //lang_elem_t( const lang_elem_t & e ) = delete;
+    //lang_elem_t& operator=( const lang_elem_t& e ) = delete;
+    ~lang_elem_t();
     bool type;
-    parser_ptr p;
-    group_ptr g;
+    std::weak_ptr<parser_t> p;
+    std::shared_ptr<group_t> g;
   };
 
   /**
@@ -134,79 +132,28 @@ namespace psil {
      items is used to mantain structure
      all_parsers is used for fast parser lookup
   */
-  struct language_st {
+  struct language_t {
+    language_t( std::string n ) : name(n), items(), all_parsers() {}
+    ~language_t();
     std::string name;
-    std::map<std::string, lang_elem_ptr > items;
-    std::map<std::string, parser_ptr > all_parsers;
+    std::vector<std::unique_ptr<lang_elem_t> > items;
+    std::map<std::string, std::shared_ptr<parser_t> > all_parsers;
 
-    void add_group( std::string s, group_ptr g );
-    void add_parser( std::string s, parser_ptr p );
+    void add( group_t * g );
+    void add( parser_t * p );
+    void add( group_t * g, parser_t * p );
+    void add( group_t * g_up, group_t * g_down );
 
-    parser_ptr get_parser( std::string pn );
+    std::shared_ptr<parser_t> get_parser( std::string pn ) const;
 
-    std::vector<parser_ptr> get_top_parsers();
+    std::vector<std::shared_ptr<parser_t> > get_top_parsers() const;
+
+    void print();
   };
 
   // ============================================================================================================
   // =============================== FUNCTIONS ==================================================================
   // ============================================================================================================
-
-
-  // Constructor functions
-  /**
-     Creates parser and updates language object
-
-     @param l - language object that gets updated
-     @param n - name of parser
-     @param rs - rule string
-     @return pointer to new parser
-  */
-  parser_ptr make_parser( language_ptr l, std::string n, std::string rs );
-
-  /**
-     Creates parser and updates language object
-
-     @param l - language object that gets updated
-     @param n - name of group
-     @return pointer to new group
-  */
-  group_ptr make_group( language_ptr l, std::string n );
-
-  /**
-     Creates parser and updates language object
-
-     @param l - pointer to language object
-     @param n - name of parser
-     @param rs - rule string
-     @return pointer to new parser
-  */
-  language_ptr make_language( std::string n );
-
-
-  // === Destructor functions ===
-
-  /**
-     Deallocate parser memory
-     
-     @param parser to be deleted
-  */
-  void delete_parser( parser_ptr arg );
-
-  /**
-     Deallocate group memory
-     
-     @param group to be deleted
-  */
-  void delete_group( group_ptr arg );
-
-  /**
-     Deallocate language memory
-     
-     @param language to be deleted
-  */
-  void delete_lang( language_ptr lang );
-  
-  // ========================== Printing functions ==============================================================
 
   /**
      Print out contents of vector of strings
@@ -215,32 +162,6 @@ namespace psil {
      @param newline - default to true, whether to add newline after printing
   */
   void print_vec( const std::vector<std::string> &v, bool newline );
-
-  /**
-    Print entire contents of language
-
-    @param lang - language to be printed
-  */
-  void lang_print( language_ptr lang );
-
-  /**
-    Print entire contents of parser
-    
-    @param arg - parser to be printed
-    @depth - how many layers deep is the print call stack
-              used to tabulate things properly
-  */
-  void parser_print( parser_ptr arg, int depth );
-
-  /**
-     Print entire contents of group
-
-     @param arg - group to be printed
-     @depth - how many layers deep is the print call stack
-              used to tabulate things properly
-  */
-  void group_print( group_ptr arg, int depth );
-
   /**
      Print contents of abstract syntax tree
      constructed from parsing user input
@@ -329,7 +250,7 @@ namespace psil {
      @param match - pass by reference flag to return when a proper match has been found
      @return pointer to abstract syntax tree if success, otherwise nullptr
   */
-  token_ptr match_rule( language_ptr lang, std::string pn, str_vec rule,
+  token_ptr match_rule( std::shared_ptr<language_t> lang, std::string pn, str_vec rule,
 			str_vec input, upoint pt, bool& match);
 
   /**
@@ -343,7 +264,7 @@ namespace psil {
      @param match - pass by reference flag to return when a proper match has been found
      @return pointer to abstract syntax tree if success, otherwise nullptr
   */
-  token_ptr apply_parser( language_ptr lang, parser_ptr par,
+  token_ptr apply_parser( std::shared_ptr<language_t> lang, std::shared_ptr<parser_t> par,
 			  str_vec input_tks, upoint pt, bool& match );
 
   /**
@@ -354,7 +275,7 @@ namespace psil {
      @param input - string of user input
      @return pointer to abstract syntax tree if success, otherwise nullptr
   */
-  token_ptr parse( language_ptr lang, std::string input );
+  token_ptr parse( std::shared_ptr<psil::language_t> lang, std::string input );
   
   // ========================== Premade functionality ===========================================================
 
@@ -363,7 +284,7 @@ namespace psil {
 
      @returns pointer to language object
   */
-  language_ptr make_psil_lang();
+  std::shared_ptr<language_t> make_psil_lang();
   
 } // end of psil namespace
 
