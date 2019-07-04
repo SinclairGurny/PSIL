@@ -40,51 +40,53 @@ psil - displays syntax of current version of PSIL
 =================================================================================================
 
 Syntax:
-<program> -> <form>*
+<program> -> <form>+
+
+FORMS:
 <form>    -> <definition> | <expression>
 
 DEFINITIONS:
-<definition>      -> <variable_def>
-		  | (begin <def>*)
+<definition>  -> <var_def>
+              |  (begin <definition>+)
 
-<variable def>   -> (define <variable> <expr>)
+<var_def>     -> (define <variable> <expr>)
+              |  (define (<variable>+) <expr>)
 
-<variable>       -> <identifier>
-<body>           -> <definition>* <expression>+
+<variable>    -> <identifier>
+<body>        -> <expression>+
+	      |  <definition>+ <expression>+
 
 EXPRESSIONS:
-<expression>     -> <constant>
-                 |  <variable>
-		 |  (quote <datum>)
-		 |  (lambda <formals> <body>)
-		 |  (if <expression> <expression> <expression>) | (if <expression> <expression>)
-		 |  (set! <variable> <expression>)
-		 |  <application>
+<expression>  -> <constant>
+              |  <variable>
+              |  (lambda <formals> <body>)
+              |  (if <expression> <expression> <expression>)
+	      |  (cond <expression> <expression>)
+              |  (set! <variable> <expression>)
+              |  (quote <datum>)
+	      |  <application>
 
-<constant>       -> <boolean> | <number> | <character>
-<formals>        -> <variable> | (<variable>*)
-<application>    -> (<expression> <expression>*)
+<constant>    -> <boolean> | <number> | <character>
+<formals>     -> <variable> | (<variable>*)
+<application> -> (<expression>) | (<expression> <expression>+)
 
 IDENTIFIERS:
-<identifier> -> <initial> <subsequent>* | + | - | ... // Rest of valid operators
-<initial>    -> <letter> | ! | $ | % | & | *  | < | = | > | ? | _
-<subsequent> -> <initial> | <digit> | _
-<letter>     -> a | b | ... | z
-<digit>      -> 0 | 1 | ... | 9
+<identifier>  -> ^[a-zA-Z_](?!.) | <operator> | ^[a-zA-Z_][a-zA-Z_0-9\!]+(?!.)
+<operator>    -> + | - | * | \ | %
 
 DATA:
-<datum>        -> <boolean> | <number> | <character> | <symbol> | <list>
-<boolean>      -> #t | #f
-<character>    -> #\<any char> | #\newline | #\space
-<symbol>       -> <identifier>
-<list>         -> (<datum>*)
-
-NUMBERS:
-<number>  -> <integer> | <decimal>
-<integer> -> <sign> <digit>+
-<decimal> -> <sign> <digit>+ . <digit>+
-<sign>    -> + | -
-
+<datum>	      -> <boolean> | <number> | <character> | <symbol> | <list>
+<boolean>     -> #t | #f
+<character>   -> #\<any char> | #\newline | #\space
+<symbol>      -> <identifier>
+<list>        -> () | (<datum>+)
+<number>      -> <integer> | <decimal>
+<integer>     -> <pos_num> | <neg_num>
+<pos_num>     -> starts with + followed by digits
+<neg_num>     -> starts with - followed by digits
+<decimal>     -> <pos_dec> | <neg_dec>
+<pos_dec>     -> starts with + followed by digits . and more digits
+<pos_dec>     -> starts with - followed by digits . and more digits
 
 =====================================================================================================
 
@@ -140,3 +142,21 @@ print, newline, read
 
 BOOLEANS:
 boolean?, not
+
+
+==============================================================================================
+=== Lexing and Parsing Library Details =======================================================
+
+
+All parser names must be written as <name>
+
+For each parser rule:
+The rule "<rule1> | <rule2>" matches with either <rule1> or <rule2>
+The rule "yes | no" matches with the exact words "yes" or "no"
+The rule "{.}" matches with the regex expression "." which matches any single character
+The rule "<rule1>+" matches with one or more <rule1>'s
+
+The parsers added directly to the top level of language are ran first. Every other parser
+is ran on an as needed basis.
+
+Groups are used to organize parsers within a language.

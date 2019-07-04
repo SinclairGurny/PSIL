@@ -14,51 +14,30 @@ using namespace psil;
 // ===================== STRUCT IMPLEMENTATIONS ===============================================================
 // ============================================================================================================
 
-/**
-   Adds group to group
-
-   @param s - name of group
-   @param g - group to be added
-*/
-void psil::group_t::add_group( std::string s, group_ptr g ) {
-  lang_elem_ptr elem( new lang_elem_t( g ) );
-  items.insert( std::make_pair(s, elem) );
+void psil::language_t::add( psil::group_t * g ) {
+  std::unique_ptr<lang_elem_t> elem( new lang_elem_t( g ) );
+  this->items.push_back( std::move(elem) );
 }
 
-/**
-   Add parser to group
-   
-   @param s - name of parser
-   @param p - parser to be added
-*/
-void psil::group_t::add_parser( std::string s, parser_ptr p ) {
-  psil::lang_elem_ptr elem( new psil::lang_elem_t( p ) );
-  items.insert( std::make_pair(s, elem) );
-  p->lang->all_parsers.insert( std::make_pair(s, p) );
+void psil::language_t::add( psil::parser_t * p ) {
+  std::shared_ptr<parser_t> pptr( p );
+  all_parsers.insert( std::make_pair( p->name, pptr ) );
+
+  std::unique_ptr<lang_elem_t> elem( new lang_elem_t( pptr ) );
+  this->items.push_back( std::move(elem) );
 }
 
-/**
-   Add group to language
-   
-   @param s - name of group
-   @param g - group to be added
-*/
-void psil::language_t::add_group( std::string s, group_ptr g ) {
-  psil::lang_elem_ptr elem( new psil::lang_elem_t( g ) );
-  items.insert( std::make_pair(s, elem) );
+void psil::language_t::add( psil::group_t * g, psil::parser_t * p ) {
+  std::shared_ptr<parser_t> pptr( p );
+  all_parsers.insert( std::make_pair( p->name, pptr ) );
+
+  std::unique_ptr<lang_elem_t> elem( new lang_elem_t( pptr ) );
+  g->items.push_back( std::move(elem) );
 }
 
-
-/**
-   Add parser to language
-
-   @param s - name of parser
-   @param p - parser to be added
-*/
-void psil::language_t::add_parser( std::string s, parser_ptr p ) {
-  psil::lang_elem_ptr elem( new psil::lang_elem_t( p ) );
-  items.insert( std::make_pair(s, elem) );
-  all_parsers.insert( std::make_pair(s, p) );
+void psil::language_t::add( psil::group_t * g_up, group_t * g_down ) {
+  std::unique_ptr<lang_elem_t> elem( new lang_elem_t( g_down ) );
+  g_up->items.push_back( std::move(elem) );
 }
 
 /**
@@ -67,12 +46,14 @@ void psil::language_t::add_parser( std::string s, parser_ptr p ) {
    @param pn - name of parser
    @return parser pointer if found, nullptr if not
 */
-psil::parser_ptr psil::language_t::get_parser( std::string pn ) {
-  auto ret_itr = all_parsers.find( pn );
+std::shared_ptr<psil::parser_t> psil::language_t::get_parser( std::string pn ) const {
+  std::string name = ( pn[pn.size()-1] == '+' ) ? pn.substr(0, pn.size()-1) : pn;
+  auto ret_itr = all_parsers.find( name );
   if ( ret_itr != all_parsers.end() ) {
     return ret_itr->second;
   }
-  return nullptr;
+  return std::shared_ptr<psil::parser_t>();
+
 }
 
 /**
@@ -80,11 +61,12 @@ psil::parser_ptr psil::language_t::get_parser( std::string pn ) {
 
    @return vector of parser pointers
 */
-std::vector<psil::parser_ptr> psil::language_t::get_top_parsers() {
-  std::vector<psil::parser_ptr> ret;
-  for ( auto it : items ) {
-    if ( it.second->type ) {
-      ret.push_back( it.second->p );
+std::vector<std::shared_ptr<parser_t> > psil::language_t::get_top_parsers() const {
+  
+  std::vector<std::shared_ptr<parser_t> > ret;
+  for ( auto it = items.begin(); it != items.end(); ++it ) {
+    if ( (*it)->type ) {
+      ret.push_back( (*it)->p.lock() );
     }
   }
   return ret;
@@ -93,12 +75,7 @@ std::vector<psil::parser_ptr> psil::language_t::get_top_parsers() {
 // ============================================================================================================
 // =============================== CONSTRUCTOR FUNCTIONS ======================================================
 
-
-psil::parser_ptr psil::make_parser( psil::language_ptr l, std::string n, std::string rs ) {
-  psil::parser_ptr p( new psil::parser_t() );
-  p->lang = l;
-  p->name = n;
-  p->rules = std::vector<str_vec>();
+psil::parser_t::parser_t( std::string n, std::string rs ) :  name(n) {
   // split rule list into parts
   std::string rule;
   size_t loc;
@@ -107,77 +84,52 @@ psil::parser_ptr psil::make_parser( psil::language_ptr l, std::string n, std::st
       rs.erase(0, loc+1);
       rule = std::regex_replace(rule, std::regex("^ +| +$|( ) +"), "$1");
       str_vec rvec = psil::tokenize_rule( rule );
-      p->rules.push_back( rvec );
+      this->rules.push_back( rvec );
   }
   if ( rs.size() > 0 ) {
     rs = std::regex_replace( rs, std::regex("^ +| +$|( ) +"), "$1");
     str_vec rvec = psil::tokenize_rule( rs );
-    p->rules.push_back( rvec );
+    this->rules.push_back( rvec );
   }
-  return p;
 }
-
-
-psil::group_ptr psil::make_group( psil::language_ptr l, std::string n ) {
-  psil::group_ptr g( new psil::group_t() );
-  g->lang = l;
-  g->name = n;
-  g->items = std::map<std::string, psil::lang_elem_ptr >();
-  return g;
-}
-
-
-psil::language_ptr psil::make_language( std::string n ) {
-  psil::language_ptr l( new language_t() );
-  l->name = n;
-  l->items = std::map<std::string, lang_elem_ptr >();
-  l->all_parsers = std::map<std::string, parser_ptr >();
-  return l;
-}
-
 
 // =============================== DESTRUCTOR FUNCTIONS =======================================================
 
 
-// === Deletes parser
-void psil::delete_parser( psil::parser_ptr arg ) {
-  arg.reset();
-  //TODO?
+// === Deletes group
+psil::group_t::~group_t() {
+  for ( auto elem = this->items.begin(); elem != this->items.end(); ++elem ) {
+    if ( (*elem)->type ) {
+      (*elem)->p.reset();
+    } else {
+      (*elem)->g.reset();
+    }
+  }
 }
 
-// === Deletes group
-void psil::delete_group( psil::group_ptr arg ) {
-  for ( auto elem : arg->items ) {
-    if ( elem.second->type ) {
-      psil::delete_parser( elem.second->p );
-      elem.second.reset();
-    } else {
-      delete_group( elem.second->g );
-      elem.second.reset();
-    }    
+psil::lang_elem_t::~lang_elem_t() {
+  if ( this->type ) {
+    p.reset();
+  } else {
+    g.reset();
   }
-  arg.reset();
 }
 
 // === Deletes language
-void psil::delete_lang( psil::language_ptr lang ) {
-  for ( auto elem : lang->items ) {
-    if ( elem.second->type ) {
-      psil::delete_parser( elem.second->p );
-      elem.second.reset();
+psil::language_t::~language_t() {
+
+  for ( auto elem = this->items.begin(); elem != this->items.end(); ++elem ) {
+    if ( (*elem)->type ) {
+      (*elem)->p.reset();
     } else {
-      psil::delete_group( elem.second->g );
-      elem.second.reset();
+      (*elem)->g.reset();
     }
   }
 
-  for ( auto elem2 : lang->all_parsers ) {
-    psil::delete_parser( elem2.second );
+  for ( auto elem2 : this->all_parsers ) {
+    elem2.second.reset();
   }
-
-  lang.reset();
 }
-
 
 // ========================== Printing functions ==============================================================
 
@@ -193,10 +145,10 @@ void psil::print_vec( const std::vector<std::string> &v, bool newline = true ) {
 
 
 // === Prints parser
-void psil::parser_print( parser_ptr arg, int depth ) {
-  std::cout << std::string(depth*2, ' ') << arg->name << std::endl;
-  std::cout << std::string(depth*2+2, ' ');
-  for ( auto rule : arg->rules ) {
+void psil::parser_t::print( int depth = 1 ) {
+  std::cout << std::string(depth*2, ' ') << this->name << std::endl;
+  std::cout << std::string(depth*3, ' ');
+  for ( auto rule : this->rules ) {
     print_vec( rule, false );
     std::cout << " | ";
   }
@@ -204,26 +156,31 @@ void psil::parser_print( parser_ptr arg, int depth ) {
 }
 
 // === Prints group
-void psil::group_print( group_ptr arg, int depth ) {
-  std::cout << std::string(depth*2, ' ') << arg->name << std::endl;
-  for ( auto elem : arg->items ) {
-    if ( elem.second->type ) {
-      psil::parser_print( elem.second->p, depth+1 );
+void psil::group_t::print( int depth = 1 ) {
+  std::cout << std::string(depth*2, ' ') << this->name << std::endl;
+  for ( auto elem = this->items.begin(); elem != this->items.end(); ++elem ) {
+    if ( (*elem)->type ) {
+      std::shared_ptr<parser_t> tmp = (*elem)->p.lock();
+      if ( !tmp ) { return; }
+      tmp->print( depth + 1 );
+      tmp.reset();
     } else {
-      psil::group_print( elem.second->g, depth+1 );
+      (*elem)->g->print( depth + 1 );
     }
   }
 }
 
 // === Prints language
-void psil::lang_print( language_ptr lang ) {
-  std::cout << "Language: " << lang->name << " ";
-  std::cout << lang->items.size() << " " << lang->all_parsers.size() << std::endl;
-  for ( auto elem : lang->items ) {
-    if ( elem.second->type ) {
-      psil::parser_print( elem.second->p, 1 );
+void psil::language_t::print() {
+  std::cout << "Language: " << this->name << " ";
+  std::cout << this->items.size() << " " << this->all_parsers.size() << std::endl;
+  for ( auto elem = this->items.begin(); elem != this->items.end(); ++elem ) {
+    if ( (*elem)->type ) {
+      std::shared_ptr<parser_t> tmp = (*elem)->p.lock();
+      tmp->print();
+      tmp.reset();
     } else {
-      psil::group_print( elem.second->g, 1 );
+      (*elem)->g->print();
     }
   }
   std::cout<<std::endl;
@@ -268,6 +225,13 @@ bool psil::is_rule( std::string input ) {
       return true;
     }
   }
+  if ( input.size() >= 4 ) {
+    size_t len = input.size();
+    if ( input[0] == '<' && input[len-2] == '>' &&
+	 ( input[len-1] == '*' || input[len-1] == '+' ) ) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -296,6 +260,7 @@ bool psil::check_parens( std::string input ) {
       memory.push_back(c);
     }
     if ( c == ')' ) {
+      if ( memory.size() == 0 ) { return false; }
       if ( memory.back() == '(' ) {
 	memory.pop_back();
       } else {
@@ -303,6 +268,7 @@ bool psil::check_parens( std::string input ) {
       }
     }
     if ( c == ']' ) {
+      if ( memory.size() == 0 ) { return false; }
       if ( memory.back() == '[' ) {
 	memory.pop_back();
       } else {
@@ -377,14 +343,14 @@ std::vector<std::string> psil::tokenize_rule( std::string rule ) {
   size_t loc = 0;
   
   for ( size_t r = 0; r < rule.size(); ++r ) {
-    if ( rule[r] == '('  ) {
+    if ( rule[r] == '(' ) {
       // find closing paren
       auto mp_ret = psil::match_parens( r, rule );
       if ( mp_ret.second.size() == 0 ) {
 	auto tmp_vec = psil::tokenize_rule( rule.substr( r+1, mp_ret.first-r-1) );
 	ret.push_back(rule.substr(r,1));
 	ret.insert( ret.end(), tmp_vec.begin(), tmp_vec.end() );
-	ret.push_back(rule.substr(mp_ret.first));
+	ret.push_back(rule.substr(mp_ret.first, 1));
 	r = mp_ret.first;
       } else { // Error occurred
 	std::cout << "Error while parsing rule\n";
@@ -397,7 +363,7 @@ std::vector<std::string> psil::tokenize_rule( std::string rule ) {
       // find closing bracket and tokenize
       if ( (loc = rule.find_first_of(">", r)) != std::string::npos ) {
 	int x = 0;
-	if ( loc+1 < rule.size() && (rule[loc+1] == '*' || rule[loc+1] == '+') ) { x=1; }
+	if ( loc+1 < rule.size() && rule[loc+1] == '+' ) { x=1; }
 	std::string tmp = rule.substr( r, loc-r+x+1 );
 	ret.push_back( tmp );
 	r = loc+x;
@@ -468,7 +434,7 @@ std::vector<std::string> psil::tokenize_input( std::string input ) {
 // ================================== Primary Parsing Functions =====================================
 
 // === Match specific rule to list of tokens
-psil::token_ptr psil::match_rule( psil::language_ptr lang, std::string pn, psil::str_vec rule,
+psil::token_ptr psil::match_rule( std::shared_ptr<psil::language_t> lang, std::string pn, psil::str_vec rule,
 				  psil::str_vec input, psil::upoint pt, bool& match) {
   
   psil::token_ptr tptr( new token_t() );
@@ -476,6 +442,8 @@ psil::token_ptr psil::match_rule( psil::language_ptr lang, std::string pn, psil:
   
   size_t in_itr = pt.first;
   size_t ru_itr = 0;
+  size_t count = 0;
+  
   for ( ; in_itr <= pt.second && ru_itr < rule.size(); ) {
     // Match parens
     if ( rule[ru_itr] == "(" || rule[ru_itr]  == ")" ||
@@ -491,13 +459,16 @@ psil::token_ptr psil::match_rule( psil::language_ptr lang, std::string pn, psil:
 	++ru_itr; ++in_itr;
 	continue;
       } else {
+	#ifdef DEBUG_MODE
 	std::cout << "Exit PAREN" << pn << std::endl;
+	#endif
+	if ( count > 0 ) { ++ru_itr; count = 0; continue; }
 	return nullptr;
       }
     }
     // Check for expansion
     else if ( psil::is_rule( rule[ru_itr] ) ) {
-      psil::parser_ptr next_p = lang->get_parser( rule[ru_itr] );
+      std::shared_ptr<psil::parser_t> next_p = lang->get_parser( rule[ru_itr] );
       if ( next_p ) {
 	bool new_match = false;
 	psil::upoint new_pt;
@@ -512,6 +483,7 @@ psil::token_ptr psil::match_rule( psil::language_ptr lang, std::string pn, psil:
 	    #ifdef DEBUG_MODE
 	    std::cout << "Exit Could not find matching paren" << pn << std::endl;
 	    #endif
+	    if ( count > 0 ) { ++ru_itr; count = 0; continue; }
 	    return nullptr;
 	  }
 	} else {
@@ -526,19 +498,26 @@ psil::token_ptr psil::match_rule( psil::language_ptr lang, std::string pn, psil:
 	  // Add result to current token
 	  token_elem_ptr tke( new token_elem_t( new_ret ) );
 	  tptr->aspects.push_back( tke );
-
-	  ++ru_itr; in_itr = new_pt.second+1;
+	  
+	  if ( rule[ru_itr][rule[ru_itr].size()-1] == '+' ) {
+	    ++count;
+	  } else {
+	    ++ru_itr;
+	  }
+	  in_itr = new_pt.second+1;
 	  continue;
 	} else {
 	  #ifdef DEBUG_MODE
 	  std::cout << "Exit No recursion match" << pn << std::endl;
 	  #endif
+	  if ( count > 0 ) { ++ru_itr; continue; }
 	  return nullptr;
 	}
       } else {
         #ifdef DEBUG_MODE
 	std::cout << "Exit No rule found" << pn << std::endl;
 	#endif
+	if ( count > 0 ) { ++ru_itr; count = 0; continue; }
 	return nullptr;
       }
     }
@@ -555,6 +534,7 @@ psil::token_ptr psil::match_rule( psil::language_ptr lang, std::string pn, psil:
         #ifdef DEBUG_MODE
 	std::cout << "Exit no regex match" << pn << std::endl;
 	#endif
+	if ( count > 0 ) { ++ru_itr; count = 0; continue; }
 	return nullptr;
       }
     }
@@ -572,19 +552,18 @@ psil::token_ptr psil::match_rule( psil::language_ptr lang, std::string pn, psil:
       #ifdef DEBUG_MODE
       std::cout << "Exit Not exact" << pn << std::endl;
       #endif
-      ++ru_itr;
+      if ( count > 0 ) { ++ru_itr; count = 0; continue; }
       return nullptr;
     }
     
   }
   
-  //delete_token( tptr );
   match = true;
   return tptr;
 }
 
 // === Try all rules of a parser
-psil::token_ptr psil::apply_parser( psil::language_ptr lang, psil::parser_ptr par,
+psil::token_ptr psil::apply_parser( std::shared_ptr<psil::language_t> lang, std::shared_ptr<psil::parser_t> par,
 				    psil::str_vec input_tks, psil::upoint pt, bool& match ) {
   #ifdef DEBUG_MODE
   std::cout << "APPLYING PARSER" << par->name << std::endl;
@@ -598,7 +577,7 @@ psil::token_ptr psil::apply_parser( psil::language_ptr lang, psil::parser_ptr pa
 }
 
 // === Parsing driver function
-psil::token_ptr psil::parse( psil::language_ptr lang, std::string input ) {
+psil::token_ptr psil::parse( std::shared_ptr<psil::language_t> lang, std::string input ) {
 
   if ( input.size() == 0 ) {
     std::cout << "Empty input" << std::endl;
@@ -628,47 +607,60 @@ psil::token_ptr psil::parse( psil::language_ptr lang, std::string input ) {
 // ========================== Premade functionality ===========================================================
 
 // === Make PSIL language
-psil::language_ptr psil::make_psil_lang() {
-  psil::language_ptr lang( psil::make_language( "PSIL" ) );
+std::shared_ptr<psil::language_t> psil::make_psil_lang() {
+  std::shared_ptr<psil::language_t> lang( new psil::language_t( "PSIL" ) );
 
-  lang->add_parser( "<program>", psil::make_parser( lang, "<program>", "<form>" ) );
-  psil::group_ptr gf = psil::make_group( lang, "FORMS" );
-  lang->add_group( "FORMS", gf );
-  gf->add_parser( "<form>", psil::make_parser( lang, "<form>", "<var_def> | <expression>" ) );
+  lang->add( new psil::parser_t( "<program>", "<form>+" ) );
   
-  psil::group_ptr gd = psil::make_group( lang, "DEFINITIONS" );
-  lang->add_group( "DEFINITIONS", gd );
-  gd->add_parser( "<var_def>", psil::make_parser( lang, "<var_def>", "(define <variable> <expression>)" ) );
-  gd->add_parser( "<variable>", psil::make_parser( lang, "<variable>", "<identifier>") );
+  psil::group_t * gf = new psil::group_t( "FORMS" );
+  lang->add( gf );
+  lang->add( gf, new psil::parser_t( "<form>", "<definition> | <expression>" ) );
 
-  psil::group_ptr ge = psil::make_group( lang, "EXPRESSIONS" );
-  lang->add_group( "EXPRESSIONS", ge );
-  ge->add_parser( "<expression>", psil::make_parser( lang, "<expression>",
-						     "<constant> | <variable> | <application>") );
-  ge->add_parser( "<constant>", psil::make_parser( lang, "<constant>", "<boolean> | <number> | <character>") );
-  ge->add_parser( "<application>", psil::make_parser( lang, "<application>", "(<expression> <expression>)") );
-  
-  psil::group_ptr gi = psil::make_group( lang, "IDENTIFIERS" );
-  lang->add_group( "IDENTIFIERS", gi );
-  gi->add_parser( "<identifier>", psil::make_parser( lang, "<identifier>",
-		  "{^[a-zA-Z_](?!.)} | <operator> | {^[a-zA-Z_][a-zA-Z_\\!]+(?!.)}") );
-  gi->add_parser( "<operator>", psil::make_parser( lang, "<operator>", "+ | - | * | \\ | %") );
-  
-  psil::group_ptr gda = psil::make_group( lang, "DATA" );
-  lang->add_group( "DATA", gda );
-  gda->add_parser( "<boolean>", psil::make_parser( lang, "<boolean>", "#t | #f") );
-  gda->add_parser( "<number>", psil::make_parser( lang, "<number>", "<integer> | <decimal>") );
-  gda->add_parser( "<integer>", psil::make_parser( lang, "<integer>", "<positive_num> | <negative_num>") );
-  gda->add_parser( "<decimal>", psil::make_parser( lang, "<decimal>", "<positive_dec> | <negative_dec>") );
-  gda->add_parser( "<positive_num>", psil::make_parser( lang, "<positive_num>", "{\\+\\d+(?!\\w)}") );
-  gda->add_parser( "<negative_num>", psil::make_parser( lang, "<negative_num>", "{-\\d+(?!\\w)}") );
-  gda->add_parser( "<positive_dec>", psil::make_parser( lang, "<positive_dec>", "{\\+\\d+(?!\\w)\\.\\d+(?!\\w)}") );
-  gda->add_parser( "<negative_dec>", psil::make_parser( lang, "<negative_dec>", "{-\\d+(?!\\w)\\.\\d+(?!\\w)}") );
-  gda->add_parser( "<character>", psil::make_parser( lang, "<character>",
-						     "{^(#\\\\).(?!.)} | #\\newline | #\\space") );
+  psil::group_t * gd = new psil::group_t( "DEFINITIONS" );
+  lang->add( gd );
+  lang->add( gd, new psil::parser_t( "<definition", "<var_def> | (begin <definition>+)" ) );
+  lang->add( gd, new psil::parser_t( "<var_def>",
+			       "(define <variable> <expression>)"
+			       "| (define (<variable>+) <expression>)" ) );
+  lang->add( gd, new psil::parser_t( "<variable>", "<identifier>" ) );
+  lang->add( gd, new psil::parser_t( "<body>", "<expression>+ | <definition>+ <expression>+" ) );
 
+  psil::group_t * ge = new psil::group_t( "EXPRESSIONS" );
+  lang->add( ge );
+  lang->add( ge, new psil::parser_t( "<expression>",
+				     "<constant> | <variable> | (lambda <formals> <body>)"
+				     "| (if <expression> <expression> <expression>)"
+				     "| (cond <expression> <expression>)"
+				     "| (set! <variable> <expression>)"
+				     "| (quote <datum>) | <application>" ) );
+  lang->add( ge, new psil::parser_t( "<constant>", "<boolean> | <number> | <character>" ) );
+  lang->add( ge, new psil::parser_t( "<formals>", "<variable> | (<variable>+)" ) );
+  lang->add( ge, new psil::parser_t( "<application>", "(<expression>+)" ) );
 
-  
+  psil::group_t * gi = new psil::group_t( "IDENTIFIERS" );
+  lang->add( gi );
+  lang->add( gi, new psil::parser_t( "<identifier>",
+				     "{^[a-zA-Z_](?!.)} | <operator>"
+				     "| {^[a-zA-Z_][a-zA-Z_0-9\\!]+(?!.)}" ) );
+  lang->add( gi, new psil::parser_t( "<operator>", "+ | - | * | \\ | %" ) );
+
+  psil::group_t * gda = new psil::group_t( "DATA" );
+  lang->add( gda );
+  lang->add( gda, new psil::parser_t( "<datum>", "<boolean> | <number> | <character> | <symbol> | <list>" ) );
+  lang->add( gda, new psil::parser_t( "<boolean>", "#t | #f" ) );
+  lang->add( gda, new psil::parser_t( "<character>", "{^(#\\\\).(?!.)} | #\\newline | #\\space" ) );
+  lang->add( gda, new psil::parser_t( "<symbol>", "<identifier>" ) );
+  lang->add( gda, new psil::parser_t( "<list>", "() | (<datum>+)" ) );
+
+  psil::group_t * gn = new psil::group_t( "NUMBERS" );
+  lang->add( gda, gn );
+  lang->add( gn, new psil::parser_t( "<number>", "<integer> | <decimal>" ) );
+  lang->add( gn, new psil::parser_t( "<integer>", "<pos_int> | <neg_int>" ) );
+  lang->add( gn, new psil::parser_t( "<decimal>", "<pos_dec> | <neg_dec>" ) );
+  lang->add( gn, new psil::parser_t( "<pos_int>", "{\\+\\d+(?!\\w)}" ) );
+  lang->add( gn, new psil::parser_t( "<neg_int>", "{-\\d+(?!\\w)}" ) );
+  lang->add( gn, new psil::parser_t( "<pos_dec>", "{\\+\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
+  lang->add( gn, new psil::parser_t( "<pos_dec>", "{-\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
   return lang;
 }
 				   
