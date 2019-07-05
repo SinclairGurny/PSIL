@@ -8,7 +8,6 @@
 
 
 #include "psil_parser.h"
-using namespace psil;
 
 // =========================================================================================================
 // ===================== STRUCT IMPLEMENTATIONS ============================================================
@@ -17,10 +16,10 @@ using namespace psil;
 // ========== Token ==================================================
 
 // === Prints token with breadth-first search
-void psil::token_t::print() {
-  std::cout << "PRINTING" << std::endl;
-  std::vector<const psil::token_elem_t * > current;
-  std::vector<const psil::token_elem_t * > next;
+void psil_parser::token_t::print() {
+  std::cout << std::endl;
+  std::vector<const psil_parser::token_elem_t * > current;
+  std::vector<const psil_parser::token_elem_t * > next;
 
   //const token_elem_t * tmp = new token_elem_t( this );
   current.push_back( new token_elem_t( this ) );
@@ -48,7 +47,7 @@ void psil::token_t::print() {
 
 
 // === Constructs parser and tokenize rules
-psil::parser_t::parser_t( std::string n, std::string rs ) :  name(n) {
+psil_parser::parser_t::parser_t( std::string n, std::string rs ) :  name(n) {
   // split rule list into parts
   std::string rule;
   size_t loc;
@@ -57,20 +56,20 @@ psil::parser_t::parser_t( std::string n, std::string rs ) :  name(n) {
       rs.erase(0, loc+1);
       rule = std::regex_replace(rule, std::regex("^ +| +$|( ) +"), "$1");
       if ( !check_parens( rule ) ) { throw std::string( "Error: mismatching parens" ); }
-      str_vec rvec = psil::tokenize_rule( rule );
+      str_vec rvec = psil_parser::tokenize_rule( rule );
       rules.push_back( rvec );
   }
   if ( rs.size() > 0 ) {
     rs = std::regex_replace( rs, std::regex("^ +| +$|( ) +"), "$1");
     if ( !check_parens( rs ) ) { throw std::string( "Error: mismatching parens" ); }
-    str_vec rvec = psil::tokenize_rule( rs );
+    str_vec rvec = psil_parser::tokenize_rule( rs );
     rules.push_back( rvec );
   }
 }
 
 
 // === Prints parser
-void psil::parser_t::print( int depth = 1 ) const {
+void psil_parser::parser_t::print( int depth = 1 ) const {
   //if ( this == nullptr ) return;
   std::cout << std::string(depth*2, ' ') << name << std::endl;
   std::cout << std::string(depth*3, ' ');
@@ -84,7 +83,7 @@ void psil::parser_t::print( int depth = 1 ) const {
 // ========== Group ===============================================
 
 // === Prints group
-void psil::group_t::print( int depth = 1 ) const {
+void psil_parser::group_t::print( int depth = 1 ) const {
   std::cout << std::string(depth*2, ' ') << name << std::endl;
   for ( auto elem = items.begin(); elem != items.end(); ++elem ) {
     if ( (*elem)->type ) {
@@ -98,7 +97,7 @@ void psil::group_t::print( int depth = 1 ) const {
 // ========== Language ===========================================
 
 // === Adds group to language
-psil::group_t * psil::language_t::add( psil::group_t * g ) {
+psil_parser::group_t * psil_parser::language_t::add( psil_parser::group_t * g ) {
   std::unique_ptr<lang_elem_t> elem( new lang_elem_t( g ) );
   this->items.push_back( std::move(elem) );
 
@@ -106,7 +105,7 @@ psil::group_t * psil::language_t::add( psil::group_t * g ) {
 }
 
 // === Adds parser to lanuage
-psil::parser_t * psil::language_t::add( psil::parser_t * p ) {
+psil_parser::parser_t * psil_parser::language_t::add( psil_parser::parser_t * p ) {
   auto ret = all_parsers.insert( std::make_pair( p->name, p ) );
   if ( !ret.second ) {
     std::string str( "Error: Parser of same name already in language" );
@@ -120,7 +119,7 @@ psil::parser_t * psil::language_t::add( psil::parser_t * p ) {
 }
 
 // Add parser to group
-psil::parser_t * psil::language_t::add( psil::group_t * g, psil::parser_t * p ) {
+psil_parser::parser_t * psil_parser::language_t::add( psil_parser::group_t * g, psil_parser::parser_t * p ) {
   auto ret = all_parsers.insert( std::make_pair( p->name, p ) );
   if ( !ret.second ) {
     std::string str( "Error: Parser of same name already in language" );
@@ -134,7 +133,7 @@ psil::parser_t * psil::language_t::add( psil::group_t * g, psil::parser_t * p ) 
 }
 
 // Add group to group
-psil::group_t * psil::language_t::add( psil::group_t * g_up, group_t * g_down ) {
+psil_parser::group_t * psil_parser::language_t::add( psil_parser::group_t * g_up, group_t * g_down ) {
   std::unique_ptr<lang_elem_t> elem( new lang_elem_t( g_down ) );
   g_up->items.push_back( std::move(elem) );
 
@@ -147,7 +146,7 @@ psil::group_t * psil::language_t::add( psil::group_t * g_up, group_t * g_down ) 
    @param pn - name of parser
    @return parser pointer if found, nullptr if not
 */
-psil::parser_t * psil::language_t::get_parser( std::string pn ) const {
+psil_parser::parser_t * psil_parser::language_t::get_parser( std::string pn ) const {
   size_t len = pn.size();
   std::string name = ( pn[len-1] == '+' || pn[len-1] == '*' ) ? pn.substr(0, pn.size()-1) : pn;
   auto ret_itr = all_parsers.find( name );
@@ -163,7 +162,7 @@ psil::parser_t * psil::language_t::get_parser( std::string pn ) const {
 
    @return vector of parser pointers
 */
-std::vector<parser_t * > psil::language_t::get_top_parsers() const {
+std::vector<psil_parser::parser_t * > psil_parser::language_t::get_top_parsers() const {
   
   std::vector<parser_t * > ret;
   for ( auto it = items.begin(); it != items.end(); ++it ) {
@@ -176,7 +175,7 @@ std::vector<parser_t * > psil::language_t::get_top_parsers() const {
 
 
 // === Prints language
-void psil::language_t::print() const {
+void psil_parser::language_t::print() const {
   std::cout << "Language: " << name << " ";
   std::cout << items.size() << " " << all_parsers.size() << std::endl;
   for ( auto elem = items.begin(); elem != items.end(); ++elem ) {
@@ -194,7 +193,7 @@ void psil::language_t::print() const {
 
 
 // === Prints vector of strings
-void psil::print_vec( const std::vector<std::string> &v, bool newline = true ) {
+void psil_parser::print_vec( const std::vector<std::string> &v, bool newline = true ) {
   for ( size_t i = 0; i < v.size(); ++i ) {
     if ( i!= 0 ) { std::cout << " "; }
     std::cout << v[i];
@@ -207,7 +206,7 @@ void psil::print_vec( const std::vector<std::string> &v, bool newline = true ) {
 // ========================== Helping functions ==============================================================
 
 // === Checks whether input is a <rule> that can be expanded
-bool psil::is_rule( std::string input ) {
+bool psil_parser::is_rule( std::string input ) {
   if ( input.size() >= 3 ) {
     if ( input[0] == '<' && input[input.size()-1] == '>' ) {
       return true;
@@ -224,7 +223,7 @@ bool psil::is_rule( std::string input ) {
 }
 
 // === Checks whether input is a {regex} expression
-bool psil::is_regex( std::string input ) {
+bool psil_parser::is_regex( std::string input ) {
   if ( input.size() >= 3 ) {
     if ( input[0] == '{' && input[input.size()-1] == '}' ) {
       return true;
@@ -234,14 +233,14 @@ bool psil::is_regex( std::string input ) {
 }
 
 // === Runs regex expression and returns whether it matches
-bool psil::match_regex( std::string expression, std::string input ) {
+bool psil_parser::match_regex( std::string expression, std::string input ) {
   std::string expr = expression.substr(1,expression.size()-2);
   std::regex re( expr );
   return std::regex_match( input, re );
 }
 
 // === Verify entire string has matching parens
-bool psil::check_parens( std::string input ) {
+bool psil_parser::check_parens( std::string input ) {
   std::vector<char> memory;
   for ( char c : input ) {
     if ( c == '(' || c == '[' ) {
@@ -268,7 +267,7 @@ bool psil::check_parens( std::string input ) {
 }
 
 // === Find matching parens in a string
-std::pair<size_t, std::string> psil::match_parens( size_t start, std::string input ) {
+std::pair<size_t, std::string> psil_parser::match_parens( size_t start, std::string input ) {
   if ( start >= input.size() ) { return std::make_pair( start, "Input not large enough" ); }
   size_t count = 1;
   char paren_open = input[start];
@@ -295,7 +294,7 @@ std::pair<size_t, std::string> psil::match_parens( size_t start, std::string inp
 }
 
 // === Find matching parens in a vector of strings
-std::pair<size_t, std::string> psil::match_parens( size_t start, str_vec input ) {
+std::pair<size_t, std::string> psil_parser::match_parens( size_t start, str_vec input ) {
   if ( start >= input.size() ) { return std::make_pair( start, "Input not large enough" ); }
   size_t count = 1;
   std::string paren_open = input[start];
@@ -326,16 +325,16 @@ std::pair<size_t, std::string> psil::match_parens( size_t start, str_vec input )
 // ==========================================================================================================
 
 // === Split rule into tokens
-std::vector<std::string> psil::tokenize_rule( std::string rule ) {
+std::vector<std::string> psil_parser::tokenize_rule( std::string rule ) {
   std::vector<std::string> ret;
   size_t loc = 0;
   
   for ( size_t r = 0; r < rule.size(); ++r ) {
     if ( rule[r] == '(' ) {
       // find closing paren
-      auto mp_ret = psil::match_parens( r, rule );
+      auto mp_ret = psil_parser::match_parens( r, rule );
       if ( mp_ret.second.size() == 0 ) {
-	auto tmp_vec = psil::tokenize_rule( rule.substr( r+1, mp_ret.first-r-1) );
+	auto tmp_vec = psil_parser::tokenize_rule( rule.substr( r+1, mp_ret.first-r-1) );
 	ret.push_back(rule.substr(r,1));
 	ret.insert( ret.end(), tmp_vec.begin(), tmp_vec.end() );
 	ret.push_back(rule.substr(mp_ret.first, 1));
@@ -405,16 +404,16 @@ std::vector<std::string> psil::tokenize_rule( std::string rule ) {
 }
 
 // === Split input string into tokens
-std::vector<std::string> psil::tokenize_input( std::string input ) {
+std::vector<std::string> psil_parser::tokenize_input( std::string input ) {
   std::vector<std::string> ret;
   size_t loc = 0;
   
   for ( size_t i = 0; i < input.size(); ++i ) {
     if ( input[i] == '('  ) {
       // find closing paren
-      auto mp_ret = psil::match_parens( i, input );
+      auto mp_ret = psil_parser::match_parens( i, input );
       if ( mp_ret.second.size() == 0 ) {
-	auto tmp_vec = psil::tokenize_input( input.substr( i+1, mp_ret.first-i-1) );
+	auto tmp_vec = psil_parser::tokenize_input( input.substr( i+1, mp_ret.first-i-1) );
 	ret.push_back(input.substr(i, 1));
 	ret.insert( ret.end(), tmp_vec.begin(), tmp_vec.end() );
 	ret.push_back(input.substr(mp_ret.first,1));
@@ -455,11 +454,12 @@ std::vector<std::string> psil::tokenize_input( std::string input ) {
 // ================================== Primary Parsing Functions =====================================
 
 // === Match specific rule to list of tokens
-std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::language_t> & lang,
-						 std::string pn, psil::str_vec rule,
-						 psil::str_vec input, psil::upoint pt, bool& match) {
+std::unique_ptr<psil_parser::token_t>
+psil_parser::match_rule( const std::unique_ptr<psil_parser::language_t> & lang,
+			 std::string pn, psil_parser::str_vec rule,
+			 psil_parser::str_vec input, psil_parser::upoint pt, bool& match) {
   
-  std::unique_ptr<psil::token_t> tptr( new token_t( pn ) );
+  std::unique_ptr<psil_parser::token_t> tptr( new token_t( pn ) );
   size_t in_itr = pt.first;
   size_t ru_itr = 0;
   bool try_again = false;
@@ -473,7 +473,7 @@ std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::lan
 	std::cerr << "MATCHED PAREN" << pn << std::endl;
 	#endif
  	// Add result to token
-	std::unique_ptr<psil::token_elem_t> tke( new token_elem_t( input[in_itr] ) );
+	std::unique_ptr<psil_parser::token_elem_t> tke( new token_elem_t( input[in_itr] ) );
 	tptr->aspects.push_back( std::move(tke) );
 	
 	++ru_itr; ++in_itr;
@@ -486,11 +486,11 @@ std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::lan
       }
     }
     // Check for expansion
-    else if ( psil::is_rule( rule[ru_itr] ) ) {
-      psil::parser_t * next_p( lang->get_parser( rule[ru_itr] ) );
+    else if ( psil_parser::is_rule( rule[ru_itr] ) ) {
+      psil_parser::parser_t * next_p( lang->get_parser( rule[ru_itr] ) );
       if ( next_p != nullptr ) {
 	bool new_match = false;
-	psil::upoint new_pt;
+	psil_parser::upoint new_pt;
 	if ( input[in_itr] == "(" ) {
 	  auto p_loc = match_parens( in_itr, input );
 	  if ( p_loc.second.size() == 0 ) {
@@ -512,7 +512,7 @@ std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::lan
 	std::cerr << "RECURSION" << pn << "->" << next_p->name << std::endl;
 	std::this_thread::sleep_for(std::chrono::milliseconds(DEBUG_DELAY));
 	#endif
-	auto new_ret = psil::apply_parser( lang, next_p, input, new_pt, new_match );
+	auto new_ret = psil_parser::apply_parser( lang, next_p, input, new_pt, new_match );
 
 	if ( rule[ru_itr].back() == '*' ) {
 	  try_again = true;
@@ -520,7 +520,7 @@ std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::lan
 	  
 	if ( new_match ) {
 	  // Add result to current token
-	  std::unique_ptr<psil::token_elem_t> tke( new token_elem_t( std::move(new_ret) ) );
+	  std::unique_ptr<psil_parser::token_elem_t> tke( new token_elem_t( std::move(new_ret) ) );
 	  tptr->aspects.push_back( std::move(tke) );
 
 	  if ( rule[ru_itr].back() == '+' ) {
@@ -553,12 +553,12 @@ std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::lan
       }
     }
     // Check for regex
-    else if ( psil::is_regex( rule[ru_itr] ) ) {
-      if ( psil::match_regex( rule[ru_itr], input[in_itr] ) ) {
+    else if ( psil_parser::is_regex( rule[ru_itr] ) ) {
+      if ( psil_parser::match_regex( rule[ru_itr], input[in_itr] ) ) {
         #ifdef DEBUG_MODE
 	std::cerr << "REGEX_MATCH" << pn << std::endl;
 	#endif
-	std::unique_ptr<psil::token_elem_t> tke( new token_elem_t( input[in_itr] ) );
+	std::unique_ptr<psil_parser::token_elem_t> tke( new token_elem_t( input[in_itr] ) );
 	tptr->aspects.push_back( std::move(tke) );
 	++ru_itr; ++in_itr;
       } else {
@@ -574,7 +574,7 @@ std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::lan
       std::cerr << "EXACT" << pn << std::endl;
       #endif
       // Add result to current token
-      std::unique_ptr<psil::token_elem_t> tke( new token_elem_t( input[in_itr] ) );
+      std::unique_ptr<psil_parser::token_elem_t> tke( new token_elem_t( input[in_itr] ) );
       tptr->aspects.push_back( std::move(tke) );
       ++ru_itr; ++in_itr;
       continue;
@@ -592,23 +592,24 @@ std::unique_ptr<psil::token_t> psil::match_rule( const std::unique_ptr<psil::lan
 }
 
 // === Try all rules of a parser
-std::unique_ptr<psil::token_t> psil::apply_parser( const std::unique_ptr<psil::language_t> & lang,
-						   psil::parser_t * par, psil::str_vec input_tks,
-						   psil::upoint pt, bool& match ) {
+std::unique_ptr<psil_parser::token_t>
+psil_parser::apply_parser( const std::unique_ptr<psil_parser::language_t> & lang,
+			   psil_parser::parser_t * par, psil_parser::str_vec input_tks,
+			   psil_parser::upoint pt, bool& match ) {
   #ifdef DEBUG_MODE
   std::cerr << "APPLYING PARSER" << par->name << std::endl;
   #endif
   bool new_match = false;
-  for ( psil::str_vec rule : par->rules ) {
-    auto ret = psil::match_rule( lang, par->name, rule, input_tks, pt, new_match );
+  for ( psil_parser::str_vec rule : par->rules ) {
+    auto ret = psil_parser::match_rule( lang, par->name, rule, input_tks, pt, new_match );
     if ( new_match ) { match = true; return ret; }
   }
   return nullptr;
 }
 
 // === Parsing driver function
-std::unique_ptr<psil::token_t> psil::parse( const std::unique_ptr<psil::language_t> & lang,
-					    std::string input ) {
+std::unique_ptr<psil_parser::token_t>
+psil_parser::parse( const std::unique_ptr<psil_parser::language_t> & lang, std::string input ) {
 
   if ( input.size() == 0 ) {
     std::cerr << "Empty input" << std::endl;
@@ -621,11 +622,11 @@ std::unique_ptr<psil::token_t> psil::parse( const std::unique_ptr<psil::language
 
   bool match = false;
   // === Split input into tokens ===
-  str_vec input_tokens = psil::tokenize_input( input );
+  str_vec input_tokens = psil_parser::tokenize_input( input );
   #ifdef DEBUG_MODE
   print_vec( input_tokens );
   #endif
-  psil::upoint pt = std::make_pair( 0, input_tokens.size()-1 );
+  psil_parser::upoint pt = std::make_pair( 0, input_tokens.size()-1 );
 
   try {
     for ( auto parser : lang->get_top_parsers() ) { // reduce to top level parsers
@@ -643,58 +644,58 @@ std::unique_ptr<psil::token_t> psil::parse( const std::unique_ptr<psil::language
 // ========================== Premade functionality ===========================================================
 
 // === Make PSIL language
-std::unique_ptr<psil::language_t> psil::make_psil_lang() {
+std::unique_ptr<psil_parser::language_t> psil_parser::make_psil_lang() {
   try {
-    std::unique_ptr<psil::language_t> lang( new psil::language_t( "PSIL" ) );
+    std::unique_ptr<psil_parser::language_t> lang( new psil_parser::language_t( "PSIL" ) );
     
-    lang->add( new psil::parser_t( "<program>", "<form>+" ) );
+    lang->add( new psil_parser::parser_t( "<program>", "<form>+" ) );
   
-    psil::group_t * gf = lang->add( new psil::group_t( "FORMS" ) );
-    lang->add( gf, new psil::parser_t( "<form>", "<definition> | <expression>" ) );
+    psil_parser::group_t * gf = lang->add( new psil_parser::group_t( "FORMS" ) );
+    lang->add( gf, new psil_parser::parser_t( "<form>", "<definition> | <expression>" ) );
   
-    psil::group_t * gd = lang->add( new psil::group_t( "DEFINITIONS" ) );
-    lang->add( gd, new psil::parser_t( "<definition>", "<var_def> | (begin <definition>+)" ) );
-    lang->add( gd, new psil::parser_t( "<var_def>",
-				       "(define <variable> <expression>)"
-				       "| (define (<variable>+) <expression>)" ) );
-    lang->add( gd, new psil::parser_t( "<variable>", "<identifier>" ) );
-    lang->add( gd, new psil::parser_t( "<body>", "<expression>+ | <definition>+ <expression>+" ) );
+    psil_parser::group_t * gd = lang->add( new psil_parser::group_t( "DEFINITIONS" ) );
+    lang->add( gd, new psil_parser::parser_t( "<definition>", "<var_def> | (begin <definition>+)" ) );
+    lang->add( gd, new psil_parser::parser_t( "<var_def>",
+					      "(define <variable> <expression>)"
+					      "| (define (<variable>+) <expression>)" ) );
+    lang->add( gd, new psil_parser::parser_t( "<variable>", "<identifier>" ) );
+    lang->add( gd, new psil_parser::parser_t( "<body>", "<expression>+ | <definition>+ <expression>+" ) );
     
-    psil::group_t * ge = lang->add( new psil::group_t( "EXPRESSIONS" ) );
-    lang->add( ge, new psil::parser_t( "<expression>",
-				       "<constant> | <variable> | (lambda <formals> <body>)"
-				       "| (if<expression> <expression> <expression>)"
-				       "| (cond <expression> <expression>)"
-				       "| (set! <variable> <expression>)"
-				       "| (test) | test3<variable> | test4()test5 | ()test6()"
-				       "| (quote <datum>) | <application>" ) );
-    lang->add( ge, new psil::parser_t( "<constant>", "<boolean> | <number> | <character>" ) );
-    lang->add( ge, new psil::parser_t( "<formals>", "<variable> | (<variable>+)" ) );
-    lang->add( ge, new psil::parser_t( "<application>", "(<expression>+)" ) );
+    psil_parser::group_t * ge = lang->add( new psil_parser::group_t( "EXPRESSIONS" ) );
+    lang->add( ge, new psil_parser::parser_t( "<expression>",
+					      "<constant> | <variable> | (lambda <formals> <body>)"
+					      "| (if<expression> <expression> <expression>)"
+					      "| (cond <expression> <expression>)"
+					      "| (set! <variable> <expression>)"
+					      "| (test) | test3<variable> | test4()test5 | ()test6()"
+					      "| (quote <datum>) | <application>" ) );
+    lang->add( ge, new psil_parser::parser_t( "<constant>", "<boolean> | <number> | <character>" ) );
+    lang->add( ge, new psil_parser::parser_t( "<formals>", "<variable> | (<variable>+)" ) );
+    lang->add( ge, new psil_parser::parser_t( "<application>", "(<expression>+)" ) );
     
-    psil::group_t * gi = lang->add( new psil::group_t( "IDENTIFIERS" ) );
-    lang->add( gi, new psil::parser_t( "<identifier>",
-				       "{^[a-zA-Z_](?!.)} | <operator>"
-				       "| {^[a-zA-Z_][a-zA-Z_0-9\\!]+(?!.)}" ) );
-    lang->add( gi, new psil::parser_t( "<operator>", "+ | - | * | \\ | %" ) );
+    psil_parser::group_t * gi = lang->add( new psil_parser::group_t( "IDENTIFIERS" ) );
+    lang->add( gi, new psil_parser::parser_t( "<identifier>",
+					      "{^[a-zA-Z_](?!.)} | <operator>"
+					      "| {^[a-zA-Z_][a-zA-Z_0-9\\!]+(?!.)}" ) );
+    lang->add( gi, new psil_parser::parser_t( "<operator>", "+ | - | * | \\ | %" ) );
     
-    psil::group_t * gda = lang->add( new psil::group_t( "DATA" ) );
-    lang->add( gda, new psil::parser_t( "<datum>", "<boolean> | <number>"
-					"| <character> | <symbol> | <list>" ) );
-    lang->add( gda, new psil::parser_t( "<boolean>", "#t | #f" ) );
-    lang->add( gda, new psil::parser_t( "<character>", "{^(#\\\\).(?!.)} | #\\newline | #\\space" ) );
-    lang->add( gda, new psil::parser_t( "<symbol>", "<identifier>" ) );
-    lang->add( gda, new psil::parser_t( "<list>", "() | (<datum>+)" ) );
+    psil_parser::group_t * gda = lang->add( new psil_parser::group_t( "DATA" ) );
+    lang->add( gda, new psil_parser::parser_t( "<datum>", "<boolean> | <number>"
+					       "| <character> | <symbol> | <list>" ) );
+    lang->add( gda, new psil_parser::parser_t( "<boolean>", "#t | #f" ) );
+    lang->add( gda, new psil_parser::parser_t( "<character>", "{^(#\\\\).(?!.)} | #\\newline | #\\space" ) );
+    lang->add( gda, new psil_parser::parser_t( "<symbol>", "<identifier>" ) );
+    lang->add( gda, new psil_parser::parser_t( "<list>", "() | (<datum>+)" ) );
     
     
-    psil::group_t * gn = lang->add( gda, new psil::group_t( "NUMBERS" ) );
-    lang->add( gn, new psil::parser_t( "<number>", "<integer> | <decimal>" ) );
-    lang->add( gn, new psil::parser_t( "<integer>", "<pos_int> | <neg_int>" ) );
-    lang->add( gn, new psil::parser_t( "<decimal>", "<pos_dec> | <neg_dec>" ) );
-    lang->add( gn, new psil::parser_t( "<pos_int>", "{\\+\\d+(?!\\w)}" ) );
-    lang->add( gn, new psil::parser_t( "<neg_int>", "{-\\d+(?!\\w)}" ) );
-    lang->add( gn, new psil::parser_t( "<pos_dec>", "{\\+\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
-    lang->add( gn, new psil::parser_t( "<neg_dec>", "{-\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
+    psil_parser::group_t * gn = lang->add( gda, new psil_parser::group_t( "NUMBERS" ) );
+    lang->add( gn, new psil_parser::parser_t( "<number>", "<integer> | <decimal>" ) );
+    lang->add( gn, new psil_parser::parser_t( "<integer>", "<pos_int> | <neg_int>" ) );
+    lang->add( gn, new psil_parser::parser_t( "<decimal>", "<pos_dec> | <neg_dec>" ) );
+    lang->add( gn, new psil_parser::parser_t( "<pos_int>", "{\\+\\d+(?!\\w)}" ) );
+    lang->add( gn, new psil_parser::parser_t( "<neg_int>", "{-\\d+(?!\\w)}" ) );
+    lang->add( gn, new psil_parser::parser_t( "<pos_dec>", "{\\+\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
+    lang->add( gn, new psil_parser::parser_t( "<neg_dec>", "{-\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
     return lang;
   } catch ( std::string exp ) {
     std::cerr << "Error: While creating language" << std::endl;

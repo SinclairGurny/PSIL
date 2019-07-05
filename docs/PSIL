@@ -1,0 +1,105 @@
+
+Syntax:
+<program> -> <form>+
+
+FORMS:
+<form>    -> <definition> | <expression>
+
+DEFINITIONS:
+<definition>  -> <var_def>
+              |  (begin <definition>+)
+
+<var_def>     -> (define <variable> <expr>)
+              |  (define (<variable>+) <expr>)
+
+<variable>    -> <identifier>
+<body>        -> <expression>+
+	      |  <definition>+ <expression>+
+
+EXPRESSIONS:
+<expression>  -> <constant>
+              |  <variable>
+              |  (lambda <formals> <body>)
+              |  (if <expression> <expression> <expression>)
+	      |  (cond <expression> <expression>)
+              |  (set! <variable> <expression>)
+              |  (quote <datum>)
+	      |  <application>
+
+<constant>    -> <boolean> | <number> | <character>
+<formals>     -> <variable> | (<variable>*)
+<application> -> (<expression>) | (<expression> <expression>+)
+
+IDENTIFIERS:
+<identifier>  -> ^[a-zA-Z_](?!.) | <operator> | ^[a-zA-Z_][a-zA-Z_0-9\!]+(?!.)
+<operator>    -> + | - | * | \ | %
+
+DATA:
+<datum>	      -> <boolean> | <number> | <character> | <symbol> | <list>
+<boolean>     -> #t | #f
+<character>   -> #\<any char> | #\newline | #\space
+<symbol>      -> <identifier>
+<list>        -> () | (<datum>+)
+<number>      -> <integer> | <decimal>
+<integer>     -> <pos_num> | <neg_num>
+<pos_num>     -> starts with + followed by digits
+<neg_num>     -> starts with - followed by digits
+<decimal>     -> <pos_dec> | <neg_dec>
+<pos_dec>     -> starts with + followed by digits . and more digits
+<pos_dec>     -> starts with - followed by digits . and more digits
+
+=====================================================================================================
+
+Standard Forms: ===================
+
+DEFINITION:
+define
+
+BINDING CONSTRUCTS:
+lambda, let
+
+CONDITIONAL EVALUATION:
+if, cond, and, or
+
+SEQUENTIAL EVALUATION:
+begin
+
+ITERATION:
+lambda
+
+QUOTING:
+quote, unquote
+
+ASSIGNMENT:
+set!
+
+Standard Procedures: ===============
+
+EQUIVALENCE PREDICATES:
+equal?, string=?, char=?
+
+NUMBERS:
+ ARITHMETIC:
+  +, -, *, /, abs, mod
+ APPROX:
+  floor, ceiling, truncate, round
+ INEQUALITIES:
+  <, <=, >, >=, =
+ MISC:
+  zero?, negative?, positive?
+
+CHARACTERS:
+char=?, char<?, char<=?, char>?, char>=?, char>?,
+
+LISTS:
+list, first, second, first!, second!, null?
+
+IDENTITY PREDICATES:
+boolean?, symbol?, number?, char?, string?, func?
+
+INPUT/OUTPUT:
+print, newline, read
+
+BOOLEANS:
+boolean?, not
+
