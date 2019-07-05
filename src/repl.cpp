@@ -13,7 +13,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 // PSIL Parser
-#include "psil_parser.h"
+#include "psil.h"
 
 // Handles Signals
 void exitHandler( int signum ) {
@@ -67,8 +67,7 @@ int main( int argc, char ** argv ) {
       continue;
     }
 
-    auto out = psil::parse( psil_lang, tmp_buf );
-    if ( out ) { out->print(); }
+    psil::repl( psil_lang, tmp_buf );
     
     std::cout << "You entered: " << tmp_buf << std::endl;
   }

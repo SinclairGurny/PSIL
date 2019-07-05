@@ -6,8 +6,7 @@
    July 2019
 */
 
-#ifndef __PSIL_H__
-#define __PSIL_H__
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -23,7 +22,7 @@
 #include <thread>
 #endif
 
-namespace psil {
+namespace psil_parser {
 
   // ===== Struct forward declarations =====
 
@@ -284,4 +283,3 @@ namespace psil {
   
 } // end of psil namespace
 
-#endif
