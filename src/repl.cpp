@@ -43,8 +43,8 @@ int main( int argc, char ** argv ) {
   // === Setup ===
   signal( SIGINT, exitHandler);
   // Make PSIL Language
-  std::shared_ptr<psil::language_t> psil_lang = psil::make_psil_lang();
-  
+  auto psil_lang = psil::make_psil_lang();
+    
   // === REPL ===
   while ( true ) {
     char * buffer = readline("psil>> ");
@@ -67,9 +67,8 @@ int main( int argc, char ** argv ) {
       continue;
     }
 
-    psil::token_ptr out = psil::parse( psil_lang, tmp_buf );
-    tk_print( out );
-    out.reset();
+    auto out = psil::parse( psil_lang, tmp_buf );
+    if ( out ) { out->print(); }
     
     std::cout << "You entered: " << tmp_buf << std::endl;
   }
