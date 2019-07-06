@@ -3,15 +3,10 @@ Syntax:
 <program> -> <form>+
 
 FORMS:
-<form>    -> <definition> | <expression>
+<form>    -> (begin <form>+) | <definition> | <expression>
 
 DEFINITIONS:
-<definition>  -> <var_def>
-              |  (begin <definition>+)
-
-<var_def>     -> (define <variable> <expr>)
-              |  (define (<variable>+) <expr>)
-
+<definition>  -> (define <variable> <expr>)
 <variable>    -> <identifier>
 <body>        -> <expression>+
 	      |  <definition>+ <expression>+
@@ -19,87 +14,137 @@ DEFINITIONS:
 EXPRESSIONS:
 <expression>  -> <constant>
               |  <variable>
+	      |  (quote <datum>)
               |  (lambda <formals> <body>)
               |  (if <expression> <expression> <expression>)
 	      |  (cond <expression> <expression>)
               |  (set! <variable> <expression>)
-              |  (quote <datum>)
 	      |  <application>
 
 <constant>    -> <boolean> | <number> | <character>
-<formals>     -> <variable> | (<variable>*)
-<application> -> (<expression>) | (<expression> <expression>+)
+<formals>     -> <variable> | (<variable>+)
+<application> -> (<expression>+)
 
 IDENTIFIERS:
-<identifier>  -> ^[a-zA-Z_](?!.) | <operator> | ^[a-zA-Z_][a-zA-Z_0-9\!]+(?!.)
+<identifier>  -> <keyword> | <operator> | ^[a-zA-Z_](?!.) | ^[a-zA-Z_][a-zA-Z_0-9\!]+(?!.)
 <operator>    -> + | - | * | \ | %
+<keyword>     -> define | lambda | if | cond | begin | set! | and | or | not
+              |  equal? | floor | ceil | trunc | round | zero? | first | second | nth
+	      |  first! | second! | nth! | null? | lt | lte | gt | gte | eq 
+	      |  ch_lt | ch_lte  | ch_gt | ch_gte | ch_eq | boolean? | number?
+	      |  char? | symbol? | list? | proc? | abs | mod | print | println | read
+	      |  quote | unquote
 
 DATA:
 <datum>	      -> <boolean> | <number> | <character> | <symbol> | <list>
 <boolean>     -> #t | #f
-<character>   -> #\<any char> | #\newline | #\space
+<character>   -> #\<any char> | #\newline | #\space | #\oparen | #\cparen | #osqbrac | #csqbrac
 <symbol>      -> <identifier>
 <list>        -> () | (<datum>+)
 <number>      -> <integer> | <decimal>
-<integer>     -> <pos_num> | <neg_num>
+<integer>     -> 0 | <pos_num> | <neg_num>
 <pos_num>     -> starts with + followed by digits
 <neg_num>     -> starts with - followed by digits
-<decimal>     -> <pos_dec> | <neg_dec>
+<decimal>     -> 0.0 | <pos_dec> | <neg_dec>
 <pos_dec>     -> starts with + followed by digits . and more digits
 <pos_dec>     -> starts with - followed by digits . and more digits
 
 =====================================================================================================
 
+Primitive Types: ====================
+
+boolean - represents true or false; #f and () is false, everything else is true
+
+character - represents a single character
+
+number
+  integer - represents any whole number
+  decimal - represents any decimal number
+
+procedure - represents any lambda function
+
 Standard Forms: ===================
 
 DEFINITION:
-define
+(define <variable> <expression>)
+(define (<variable> <variable> ...) <expression>)
+    Assign variable or variables to expression
 
-BINDING CONSTRUCTS:
-lambda, let
+FUNCTIONS:
+(lambda (<variables> ...) <...>)
+    Create unnamed function binding specific variables
 
-CONDITIONAL EVALUATION:
-if, cond, and, or
+DECISIONS:
+(if <expression a> <expression b> <expression c>)
+    if a is true then b else c
 
+(cond <expression a> <expression b>)
+    if a then b
+    
 SEQUENTIAL EVALUATION:
-begin
-
-ITERATION:
-lambda
-
-QUOTING:
-quote, unquote
+(begin <definition/expression> ...)
+    evaluated each definition or expression in sequence
 
 ASSIGNMENT:
-set!
+(set! <variable> <expression>)
+    assign variable to expression, overwriting previous value, does not work on keywords
 
 Standard Procedures: ===============
 
-EQUIVALENCE PREDICATES:
-equal?, string=?, char=?
+LOGICAL:
+  (and ...)
+    returns logical and of all arguments as boolean
+  (or ...)
+    returns logical or of all arguments as boolean
+  (not arg)
+    returns logical negation of all arguments as boolean
+
+EQUIVALENCE:
+(equal? <a> <b> ...)
+    checks if a and b and ... are of the value
 
 NUMBERS:
- ARITHMETIC:
-  +, -, *, /, abs, mod
- APPROX:
-  floor, ceiling, truncate, round
- INEQUALITIES:
-  <, <=, >, >=, =
- MISC:
-  zero?, negative?, positive?
+  ARITHMETIC:
+    (+ a b ...), (- a b ...), (* a b ...), (/ a b ...)
+      where a, b, ... are numbers
+    (abs a)
+      takes absolute value of a
+    (mod a b)
+      returns a mod b
+  APPROX:
+    (floor a), (ceil a), (trunc a), (round a)
+      where a is a decimal and returns an integer
+  INEQUALITIES:
+    (< a b), (<= a b), (> a b), (>= a b), (= a b)
+      where a and b are numbers and returns a boolean
+  MISC:
+    (zero? a)
+      returns whether the number is equal to zero
 
 CHARACTERS:
-char=?, char<?, char<=?, char>?, char>=?, char>?,
+  ch=, ch<, ch<=, ch>, ch>=
+    same as number operations but performs on characters
 
 LISTS:
-list, first, second, first!, second!, null?
+  (first l), (second l), (nth idx l)
+    get the corresponding value from a list
+  (first! l val), (second! l val), (nth! l val)
+    set the corresponding value from a list
+  (null? l)
+    check if the list is null (quote ())
+  (quote x)
+    converts x into a list
+  (unquote x)
+    removes the quote from the argument
 
 IDENTITY PREDICATES:
-boolean?, symbol?, number?, char?, string?, func?
+  boolean?, symbol?, number?, char?, proc?, list?
+    checks type of variable
 
 INPUT/OUTPUT:
-print, newline, read
+  (print ...), (println ...)
+    prints all arguments to stdout
+  (read type)
+    grabs first value from stdin of type given
 
-BOOLEANS:
-boolean?, not
 
