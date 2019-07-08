@@ -13,7 +13,6 @@
 namespace psil_eval {
 
   // redeclare for ease of use
-  using upoint = std::pair<size_t, size_t>;
   using TE_Type = psil_parser::token_elem_t::TE_Type;
 
   /**

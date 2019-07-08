@@ -510,7 +510,9 @@ psil_parser::match_rule( const std::unique_ptr<psil_parser::language_t> & lang,
 	
 	#ifdef DEBUG_MODE
 	std::cerr << "RECURSION" << pn << "->" << next_p->name << std::endl;
+	#ifdef DEBUG_SLOW
 	std::this_thread::sleep_for(std::chrono::milliseconds(DEBUG_DELAY));
+	#endif
 	#endif
 	auto new_ret = psil_parser::apply_parser( lang, next_p, input, new_pt, new_match );
 
