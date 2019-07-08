@@ -26,10 +26,10 @@ void psil_parser::token_t::print() {
   
   while ( current.size() > 0 ) {
     for ( auto elem : current ) {
-      if ( elem->type ) { // string
+      if ( elem->elem_type == psil_parser::token_elem_t::TE_Type::STRING) { // string
 	std::cout << "  Aspect:: " << elem->str;
       } else { // token
-	std::cout << "  Tk:type: " << elem->tk->type;
+	std::cout << "  Tk:type: " << elem->tk->type_name;
 	for ( auto it = elem->tk->aspects.begin(); it != elem->tk->aspects.end(); ++it ) {
 	  next.push_back( it->get() );
 	}
@@ -86,7 +86,7 @@ void psil_parser::parser_t::print( int depth = 1 ) const {
 void psil_parser::group_t::print( int depth = 1 ) const {
   std::cout << std::string(depth*2, ' ') << name << std::endl;
   for ( auto elem = items.begin(); elem != items.end(); ++elem ) {
-    if ( (*elem)->type ) {
+    if ( (*elem)->elem_type == psil_parser::lang_elem_t::LE_Type::PARSER) {
       (*elem)->p->print( depth + 1 );
     } else {
       (*elem)->g->print( depth + 1 );
@@ -166,7 +166,7 @@ std::vector<psil_parser::parser_t * > psil_parser::language_t::get_top_parsers()
   
   std::vector<parser_t * > ret;
   for ( auto it = items.begin(); it != items.end(); ++it ) {
-    if ( (*it)->type ) {
+    if ( (*it)->elem_type == psil_parser::lang_elem_t::LE_Type::PARSER ) {
       ret.push_back( (*it)->p );
     }
   }
@@ -179,7 +179,7 @@ void psil_parser::language_t::print() const {
   std::cout << "Language: " << name << " ";
   std::cout << items.size() << " " << all_parsers.size() << std::endl;
   for ( auto elem = items.begin(); elem != items.end(); ++elem ) {
-    if ( (*elem)->type ) {
+    if ( (*elem)->elem_type == psil_parser::lang_elem_t::LE_Type::PARSER) {
       (*elem)->p->print();
     } else {
       (*elem)->g->print();

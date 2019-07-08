@@ -1,6 +1,6 @@
 
 Syntax:
-<program> -> <form>+
+<program> -> <form>
 
 FORMS:
 <form>    -> (begin <form>+) | <definition> | <expression>
