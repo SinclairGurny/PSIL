@@ -16,7 +16,7 @@ PSIL:
 Stands for Programming Some Idiotic Lisp.
 (It's actually based on Scheme Syntax)
 
-PSIL is a WIP compiler for my own version of a LISP like language
+PSIL is a WIP interpretter for my own version of a LISP like language
 
 written by Sinclair Gurny
 Starting in July 2019
@@ -36,21 +36,3 @@ quit - exits
 exit - also exits
 help - displays commands
 psil - displays syntax of current version of PSIL
-
-==============================================================================================
-==============================================================================================
-=== Lexing and Parsing Library Details =======================================================
-
-
-All parser names must be written as <name>
-
-For each parser rule:
-The rule "<rule1> | <rule2>" matches with either <rule1> or <rule2>
-The rule "yes | no" matches with the exact words "yes" or "no"
-The rule "{.}" matches with the regex expression "." which matches any single character
-The rule "<rule1>+" matches with one or more <rule1>'s
-
-The parsers added directly to the top level of language are ran first. Every other parser
-is ran on an as needed basis.
-
-Groups are used to organize parsers within a language.

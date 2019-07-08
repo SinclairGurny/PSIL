@@ -48,11 +48,12 @@ namespace psil_parser {
      false - object holds a token in tk
   */
   struct token_elem_t {
-    token_elem_t( std::string s ) : type(true), str(s) {}
-    token_elem_t( std::unique_ptr<token_t> p ) : type(false), tk(std::move(p)) {}
-    token_elem_t( token_t * p ) : type(false), tk(p) {}
-        
-    bool type;
+    token_elem_t( std::string s ) : elem_type(STRING), str(s) {}
+    token_elem_t( std::unique_ptr<token_t> p ) : elem_type(TOKEN), tk(std::move(p)) {}
+    token_elem_t( token_t * p ) : elem_type(TOKEN), tk(p) {}
+
+    enum TE_Type { STRING, TOKEN };
+    TE_Type elem_type;
     std::string str;
     std::unique_ptr<token_t> tk;
   };
@@ -64,11 +65,11 @@ namespace psil_parser {
      type: represents the variety of token, ie: noun, adjective, etc
   */
   struct token_t {
-    token_t( std::string t ) : type(t) {}
+    token_t( std::string t ) : type_name(t) {}
     
     void print();
     
-    std::string type;
+    std::string type_name;
     std::vector<std::unique_ptr<token_elem_t> > aspects;
   };
 
@@ -118,10 +119,11 @@ namespace psil_parser {
      false -> holds group in g
   */
   struct lang_elem_t {
-    lang_elem_t( parser_t * _p ) : type(true), p(_p) {}
-    lang_elem_t( group_t * _g ) : type(false), g(_g) {}
-        
-    bool type;
+    lang_elem_t( parser_t * _p ) : elem_type(PARSER), p(_p) {}
+    lang_elem_t( group_t * _g ) : elem_type(GROUP), g(_g) {}
+
+    enum LE_Type {PARSER, GROUP};
+    LE_Type elem_type;
     parser_t * p;
     std::unique_ptr<group_t> g;
   };
