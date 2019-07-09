@@ -61,6 +61,7 @@ namespace psil_exec {
     void pop();
     ExistsType exists( std::string n );
     token_ptr get( std::string n, ExistsType e );
+    void update( std::string n, ExistsType e, const token_ptr & v );
 
     size_t current_scope;
     std::map<std::string, std::unique_ptr<stack_elem_t> > global_table;
@@ -114,6 +115,14 @@ namespace psil_exec {
   */
   void exec_app( stack_ptr & s, token_ptr & node, bool& rem );
 
+
+  /**
+     Executes the set! operation
+     Assumes the node given is the expression token containing the set!
+     Can only set locally defined variables in scope
+  */
+  void exec_set( stack_ptr & s, token_ptr & node );
+  
   /**
      Executes the definition given
      Assumes the node given is the definition token
