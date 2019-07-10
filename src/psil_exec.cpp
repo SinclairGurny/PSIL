@@ -45,7 +45,7 @@ namespace psil_exec {
 	std::cerr << "Cannot look up variables yet" << std::endl;
 	return VarType::UNKNOWN;
       } else if ( tk->aspects.front()->tk->type_name == "<application>" ) {
-	//exec( tk->aspects.front()->tk, r );
+	// lazy eval, don't run
 	std::cerr << "Cannot run functions yet" << std::endl;
 	return VarType::UNKNOWN;
       }
@@ -53,25 +53,14 @@ namespace psil_exec {
       if ( tk->aspects[1]->str == "lambda" ) { // LAMBDA
 	return VarType::PROC;
       } else if ( tk->aspects[1]->str == "cond" ) { // COND
-	/*bool r = false;
-	exec_cond( tk, r );
-	if ( !r )
-	  exec( tk, r );
-	  if ( r ) return VarType::UNKNOWN;*/
-	//return check_type( tk );
+	// lazy eval don't run
 	return VarType::UNKNOWN;
       } else if ( tk->aspects[1]->str == "set!" ) { // SET!
-	//exec_set( tk );
 	return VarType::ERROR;
       }
     } else if ( tk->aspects.size() == 6 && tk->aspects[1]->elem_type == TE_Type::STRING &&
 		tk->aspects[1]->str == "if" ) { // IF
-      /*
-      bool r = false;
-      exec_if( tk, r );
-      if ( !r )
-	exec( tk, r );
-	if ( r ) { rem = true; }*/
+      // lazy eval, don't run
       return VarType::UNKNOWN;
     }
     return VarType::UNKNOWN;
@@ -266,9 +255,8 @@ namespace psil_exec {
 	exec( stack, ast, rem );
 	if ( !rem ) {
 	  ast->print();
-	} else {
-	  std::cout << "No output" << std::endl;
 	}
+	std::cout << std::endl;
       } catch ( std::string exp ) {
 	std::cerr << "Runtime error:: " << exp << std::endl;
       }
@@ -387,16 +375,6 @@ namespace psil_exec {
       node->aspects.clear();
     }
   }
-  
-  // === Execute lambda expression
-  void exec_lambda( stack_ptr & s, token_ptr & node, bool& rem ) {
-    // TODO
-  }
-
-  // === Execute application expression
-  void exec_app( stack_ptr & s, token_ptr & node, bool& rem ) {
-    // TODO
-  }
 
   void exec_set( stack_ptr & s, token_ptr & node ) {
     auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
@@ -441,6 +419,110 @@ namespace psil_exec {
     }
   }
   
+
+  
+  // === Execute lambda expression
+  void exec_lambda( stack_ptr & s, token_ptr & node, bool& rem ) {
+    // TODO
+  }
+
+  // === Execute application expression
+  void exec_app( stack_ptr & s, token_ptr & node, bool& rem ) {
+    size_t idx = 0;
+    std::string func_name;
+    stack_t::ExistsType ftype;
+    // === Perform checks and get information about application
+    for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++idx ) {
+      //std::cout << "LOOP" << idx << std::endl;
+      // === If is token and first aspect is token
+      if ( (*itr)->elem_type == TE_Type::TOKEN && !(*itr)->tk->aspects.empty() &&
+	   (*itr)->tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
+	std::string exp_type = (*itr)->tk->aspects.front()->tk->type_name;
+	//std::cout << "Expression type: " << exp_type << std::endl;
+	if ( (*itr)->tk->aspects.front()->tk->type_name == "<constant>" ) {
+	  if ( idx == 1 ) { throw std::string( "Cannot apply a constant" ); }
+	  //std::cout << "Const Argument " << idx << std::endl;
+	  ++itr; continue;
+	} else if ( (*itr)->tk->aspects.front()->tk->type_name == "<variable>" ) {
+	  if ( idx == 1 ) {
+	    // ========== Grab correct function name =====================
+	    //             <expression>           <variable>         <identifier>
+	    auto iden = (*itr)->tk->aspects.front()->tk->aspects.front()->tk.get();
+	    if ( iden->aspects.front()->elem_type == TE_Type::TOKEN ) {
+	      // function name is of type <keyword> or <operator>
+	      if ( iden->aspects.front()->tk->type_name == "<operator>" ) {
+		//       <identifier>            <operator>           name
+		func_name = iden->aspects.front()->tk->aspects.front()->str;
+		ftype = stack_t::ExistsType::GLOBAL;
+	      } else {
+		//        <identifier>          <keyword>            name
+		func_name = iden->aspects.front()->tk->aspects.front()->str;
+		ftype = s->exists( func_name );
+		if ( ftype != stack_t::ExistsType::GLOBAL ) {
+		  throw std::string( "Error while applying function" );
+		  return;
+		}
+	      }
+	    } else { // === Locally defined function name
+	      //        <identifier>          name
+	      func_name = iden->aspects.front()->str;
+	      ftype = s->exists( func_name );
+	      if ( ftype != stack_t::ExistsType::LOCAL ) {
+		throw std::string( "Cannot find function name" );
+		return;
+	      }
+	      throw std::string( "Cannot run locally defined functions yet" );
+	    }
+	    // === Check for more errors
+	    //std::cout << "Application grabbed: " << func_name << std::endl;
+	    ftype = s->exists( func_name );
+	    if ( ftype == stack_t::ExistsType::NO ) {
+	      throw std::string( "Function name not defined" );
+	      return;
+	    }
+	  } else { // Execute expressions used as arguments
+	    //std::cout << "Argument Variable " << idx << " expanded"<< std::endl;
+	    bool r = false;
+	    exec( s, (*itr)->tk, r);
+	    if ( r ) node->aspects.erase( itr );
+	    else ++itr;
+	    continue;
+	  }
+	} else { // Not const or variable
+	  //std::cout << "Expression Argument expanded" << idx << std::endl;
+	  bool r = false;
+	  exec( s, (*itr)->tk, r);
+	  if ( r ) node->aspects.erase( itr );
+	  throw std::string( "Cannot run application in current format yet" );
+	  return;
+	}
+      }
+      ++itr;
+    }
+    // == Apply function
+    if ( ftype == stack_t::ExistsType::GLOBAL ) {
+      apply_global_function( s, node, rem, func_name );
+    }
+  }
+
+  void apply_global_function( stack_ptr & s, token_ptr & node, bool& rem, std::string fun ) {
+    if ( fun == "print" ) {
+      if ( node->aspects.size() < 4 )
+	throw std::string( "print: Wrong number of arguments given, 1+ expected" );
+      rem = true;
+      print( node, false);
+    } else if ( fun == "println" ) {
+      if ( node->aspects.size() < 4 )
+	throw std::string( "println: Wrong number of arguments given, 1+ expected" );
+      rem = true;
+      print( node , true );
+    } else if ( fun == "newline" ) {
+      if ( node->aspects.size() != 3 )
+	throw std::string( "newline: Wrong number of arguments given, 0 expected" );
+      rem = true;
+      std::cout << std::endl;
+    }
+  }
   
   // ========================================================================================
   

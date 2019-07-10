@@ -37,3 +37,13 @@ quit - exits
 exit - also exits
 help - displays commands
 psil - displays syntax of current version of PSIL
+
+=======================================================
+
+Examples:
+
+Hello World Program:
+>> (print #\H #\e #\l #\l #\o #\, #\space #\W #\o #\r #\l #\d #\!)
+
+Hello, World!
+
