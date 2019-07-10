@@ -68,8 +68,6 @@ int main( int argc, char ** argv ) {
     }
 
     psil::repl( psil_lang, tmp_buf );
-    
-    std::cout << "You entered: " << tmp_buf << std::endl;
   }
 
   return 0;

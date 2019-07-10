@@ -53,7 +53,7 @@ DATA:
 
 Primitive Types: ====================
 
-boolean - represents true or false; #f and () is false, everything else is true
+boolean - represents true or false; #f and zero is false, everything else is true
 
 character - represents a single character
 

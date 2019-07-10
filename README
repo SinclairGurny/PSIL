@@ -25,7 +25,8 @@ Starting in July 2019
 
 Compiling:
 make - for normal
-make debug - full parsing output with delay
+make debug - full parsing output
+make debug_slow - full parsing output with delay
 make clean - delete unnecessary files
 
 Running:
