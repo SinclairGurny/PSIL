@@ -134,6 +134,14 @@ namespace psil_exec {
      Replaces variables with their value
   */
   void exec_var( stack_ptr & s, token_ptr & node, bool& rem );
+
+  // ==============================================================================
+
+
+  /**
+     Applies the global functions
+  */
+  void apply_global_function( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
   
 
   // ==============================================================================
@@ -148,6 +156,12 @@ namespace psil_exec {
      Checks to see if a number is zero (0 or 0.0)
   */
   bool is_zero( token_ptr & node );
+
+  // =============================================================================
+  // ===== Global functions ======================================================
+
+  void print( token_ptr & node, bool newline );
+  
 
   
 }
