@@ -33,6 +33,11 @@ namespace psil_exec {
   token_ptr copy_tk( const token_ptr & tk );
 
   /**
+     Compares two tokens recursively
+  */
+  bool equal_tk( const token_ptr & tk1, const token_ptr & tk2 );
+
+  /**
      Checks type of token
      Assumes top level token is an expression
   */
@@ -141,7 +146,7 @@ namespace psil_exec {
   /**
      Applies the global functions
   */
-  void apply_global_function( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
+  void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
   
 
   // ==============================================================================
@@ -160,8 +165,58 @@ namespace psil_exec {
   // =============================================================================
   // ===== Global functions ======================================================
 
+  // Input/Output
   void print( token_ptr & node, bool newline );
-  
-
+  void psil_read( token_ptr & node );
+  // Boolean
+  void psil_and( stack_ptr & s, token_ptr & node );
+  void psil_or( stack_ptr & s, token_ptr & node );
+  void psil_not( stack_ptr & s, token_ptr & node );
+  void psil_is_equal( stack_ptr & s, token_ptr & node );
+  // Math
+  // Operators
+  void psil_add( stack_ptr & s, token_ptr & node );
+  void psil_sub( stack_ptr & s, token_ptr & node );
+  void psil_mult( stack_ptr & s, token_ptr & node );
+  void psil_div( stack_ptr & s, token_ptr & node );
+  void psil_abs( stack_ptr & s, token_ptr & node );
+  void psil_mod( stack_ptr & s, token_ptr & node );
+  // Approx
+  void psil_floor( stack_ptr & s, token_ptr & node );
+  void psil_ceil( stack_ptr & s, token_ptr & node );
+  void psil_trunc( stack_ptr & s, token_ptr & node );
+  void psil_round( stack_ptr & s, token_ptr & node );
+  // Inequalities
+  void psil_lt( stack_ptr & s, token_ptr & node );
+  void psil_lte( stack_ptr & s, token_ptr & node );
+  void psil_gt( stack_ptr & s, token_ptr & node );
+  void psil_gte( stack_ptr & s, token_ptr & node );
+  void psil_eq( stack_ptr & s, token_ptr & node );
+  void psil_is_zero( stack_ptr & s, token_ptr & node );
+  // Character
+  void psil_chlt( stack_ptr & s, token_ptr & node );
+  void psil_chlte( stack_ptr & s, token_ptr & node );
+  void psil_chgt( stack_ptr & s, token_ptr & node );
+  void psil_chgte( stack_ptr & s, token_ptr & node );
+  void psil_cheq( stack_ptr & s, token_ptr & node );
+  // List
+  void psil_first( stack_ptr & s, token_ptr & node );
+  void psil_second( stack_ptr & s, token_ptr & node );
+  void psil_nth( stack_ptr & s, token_ptr & node );
+  void psil_set_first( stack_ptr & s, token_ptr & node );
+  void psil_set_second( stack_ptr & s, token_ptr & node );
+  void psil_set_nth( stack_ptr & s, token_ptr & node );
+  void psil_is_null( stack_ptr & s, token_ptr & node );
+  // Quote
+  void psil_quote( stack_ptr & s, token_ptr & node );
+  void psil_unquote( stack_ptr & s, token_ptr & node );
+  // Identity predicates
+  void psil_isbool( stack_ptr & s, token_ptr & node );
+  void psil_isnum( stack_ptr & s, token_ptr & node );
+  void psil_ischar( stack_ptr & s, token_ptr & node );
+  void psil_issymbol( stack_ptr & s, token_ptr & node );
+  void psil_isproc( stack_ptr & s, token_ptr & node );
+  void psil_islist( stack_ptr & s, token_ptr & node );
   
 }
+

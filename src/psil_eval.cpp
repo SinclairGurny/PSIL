@@ -12,24 +12,24 @@ namespace psil_eval {
 
   // Check expression for semantic erros
   bool check_expression( psil_parser::token_t * node ) {
-    // Look for lambda expressions
-    if ( node->aspects.size() == 5 && node->aspects[1]->elem_type == TE_Type::STRING
-	 && node->aspects[1]->str == "lambda" ) {
-      return check_lambda( node );
-    }
-    // Look for application
-    else if ( node->aspects.size() == 1 && node->aspects.front()->elem_type == TE_Type::TOKEN
-	      && node->aspects.front()->tk->type_name == "<application>" ) {
-      auto app = node->aspects.front()->tk.get();
-      for ( auto itr = app->aspects.begin(); itr != app->aspects.end(); ++itr ) {
-	// Recurse on expressions
-	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
-	  if ( !check_node( (*itr)->tk.get() ) ) return false;
-	}
+    if ( node->aspects.size() == 1 && node->aspects.front()->elem_type == TE_Type::TOKEN ) {
+      if ( node->aspects.front()->tk->type_name == "<constant>" ) {
+	return true;
+      } else if ( node->aspects.front()->tk->type_name == "<variable>" ) {
+	return true;
+      } else if ( node->aspects.front()->tk->type_name == "<lambda>" ) {
+	return check_lambda( node->aspects.front()->tk.get() );
+      } else if ( node->aspects.front()->tk->type_name == "<conditional>" ||
+		  node->aspects.front()->tk->type_name == "<application>" ) {
+	auto tmp = node->aspects.front()->tk.get();
+	for ( auto itr = tmp->aspects.begin(); itr != tmp->aspects.end(); ++itr ) {
+	  // Recurse on expressions
+	  if ( (*itr)->elem_type == TE_Type::TOKEN ) {
+	    if ( !check_node( (*itr)->tk.get() ) ) return false;
+	  }
+	}	
       }
-    }
-    // Any other type of expression
-    else {
+    } else { // (begin <expr>+)
       for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++itr ) {
 	// Recurse on expressions
 	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
