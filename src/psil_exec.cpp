@@ -504,25 +504,6 @@ namespace psil_exec {
       apply_global_function( s, node, rem, func_name );
     }
   }
-
-  void apply_global_function( stack_ptr & s, token_ptr & node, bool& rem, std::string fun ) {
-    if ( fun == "print" ) {
-      if ( node->aspects.size() < 4 )
-	throw std::string( "print: Wrong number of arguments given, 1+ expected" );
-      rem = true;
-      print( node, false);
-    } else if ( fun == "println" ) {
-      if ( node->aspects.size() < 4 )
-	throw std::string( "println: Wrong number of arguments given, 1+ expected" );
-      rem = true;
-      print( node , true );
-    } else if ( fun == "newline" ) {
-      if ( node->aspects.size() != 3 )
-	throw std::string( "newline: Wrong number of arguments given, 0 expected" );
-      rem = true;
-      std::cout << std::endl;
-    }
-  }
   
   // ========================================================================================
   

@@ -6,7 +6,8 @@ FORMS:
 <form>    -> (begin <form>+) | <definition> | <expression>
 
 DEFINITIONS:
-<definition>  -> (define <variable> <expr>)
+<definition>  -> (define <variable> <expression>)
+	      |  (update <variable> <expression>)
 <variable>    -> <identifier>
 <body>        -> <expression>+
 	      |  <definition>+ <expression>+
@@ -19,9 +20,10 @@ EXPRESSIONS:
               |  (if <expression> <expression> <expression>)
 	      |  (cond <expression> <expression>)
               |  (set! <variable> <expression>)
+	      |  (begin <expression>+)
 	      |  <application>
 
-<constant>    -> <boolean> | <number> | <character>
+<constant>    -> <boolean> | <number> | <character> | <list_def>
 <formals>     -> <variable> | (<variable>+)
 <application> -> (<expression>+)
 
@@ -40,6 +42,7 @@ DATA:
 <boolean>     -> #t | #f
 <character>   -> #\<any char> | #\newline | #\space | #\oparen | #\cparen | #osqbrac | #csqbrac
 <symbol>      -> <identifier>
+<list_def>    -> (quote <datum>)
 <list>        -> () | (<datum>+)
 <number>      -> <integer> | <decimal>
 <integer>     -> 0 | <pos_num> | <neg_num>
