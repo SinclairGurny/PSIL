@@ -33,6 +33,11 @@ namespace psil_exec {
   token_ptr copy_tk( const token_ptr & tk );
 
   /**
+     Compares two tokens recursively
+  */
+  bool equal_tk( const token_ptr & tk1, const token_ptr & tk2 );
+
+  /**
      Checks type of token
      Assumes top level token is an expression
   */
@@ -141,7 +146,7 @@ namespace psil_exec {
   /**
      Applies the global functions
   */
-  void apply_global_function( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
+  void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
   
 
   // ==============================================================================

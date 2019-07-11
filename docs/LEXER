@@ -8,7 +8,7 @@ For each parser rule:
 The rule "<rule1> | <rule2>" matches with either <rule1> or <rule2>
 The rule "yes | no" matches with the exact words "yes" or "no"
 The rule "{.}" matches with the regex expression "." which matches any single character,
-  regex expressions with mismatching <,>,(,),[,] will cause errors
+  regex expressions with mismatching <,>,(,),[,] will cause errors, don't use them
 The rule "<rule1>*" matches with zero or more <rule1>'s
 The rule "<rule1>+" matches with one or more <rule1>'s
 

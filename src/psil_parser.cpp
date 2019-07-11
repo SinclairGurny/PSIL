@@ -191,7 +191,7 @@ namespace psil_parser {
   }
 
 
-  // ========================== Printing functions ==============================================================
+  // ========================== Printing functions =======================================================
 
 
   // === Prints vector of strings
@@ -205,7 +205,7 @@ namespace psil_parser {
 
 
 
-  // ========================== Helping functions ==============================================================
+  // ========================== Helping functions =======================================================
 
   // === Checks whether input is a <rule> that can be expanded
   bool is_rule( std::string input ) {
@@ -644,7 +644,7 @@ namespace psil_parser {
   }
 				   
 
-  // ========================== Premade functionality ===========================================================
+  // ========================== Premade functionality =======================================================
 
   // === Make PSIL language
   std::unique_ptr<language_t> make_psil_lang() {
@@ -658,30 +658,33 @@ namespace psil_parser {
   
       group_t * gd = lang->add( new group_t( "DEFINITIONS" ) );
       lang->add( gd, new parser_t( "<definition>",
-				   "(define <variable> <expression>)" ) );
+				   "(define <variable> <expression>)"
+				   "(update <variable> <expression>)" ) );
       lang->add( gd, new parser_t( "<variable>", "<identifier>" ) );
-      lang->add( gd, new parser_t( "<body>", "<definition>* <expression>" ) );
-    
+      
       group_t * ge = lang->add( new group_t( "EXPRESSIONS" ) );
       lang->add( ge, new parser_t( "<expression>",
-				   "<constant> | <variable> | (quote <datum>)"
-				   "| (lambda <formals> <body>)"
-				   "| (if <expression> <expression> <expression>)"
-				   "| (cond <expression> <expression>)"
-				   "| (set! <variable> <expression>)"
-				   "| <application>" ) );
-    
-      lang->add( ge, new parser_t( "<constant>", "<boolean> | <number> | <character>" ) );
-      lang->add( ge, new parser_t( "<application>", "(<expression>+)" ) );
+				   "(begin <expression>+) | <constant> | <variable>"
+				   "| <lambda> | <conditional> | <application>" ) );
+	
+      lang->add( ge, new parser_t( "<constant>", "<boolean> | <number> | <character> | <list_def>" ) );
+
+      lang->add( ge, new parser_t( "<lambda>", "(lambda <formals> <body>)" ) );
       lang->add( ge, new parser_t( "<formals>", "<variable> | (<variable>+)" ) );
-    
+      lang->add( gd, new parser_t( "<body>", "<definition>* <expression>+" ) );
+	    
+      lang->add( ge, new parser_t( "<conditional>",
+				   "(cond <expression> <expression>)"
+				   "(if <expression> <expression> <expression>)") );
+      lang->add( ge, new parser_t( "<application>", "(<expression>+)" ) );
+		 
       group_t * gi = lang->add( new group_t( "IDENTIFIERS" ) );
       lang->add( gi, new parser_t( "<identifier>",
 				   "<keyword> | <operator> | {^[a-zA-Z_](?!.)}"
 				   "| {^[a-zA-Z_][a-zA-Z_0-9\\!]+(?!.)}" ) );
       lang->add( gi, new parser_t( "<operator>", "+ | - | * | \\" ) );
       lang->add( gi, new parser_t( "<keyword>",
-				   "define | lambda | if | cond | begin | set!"
+				   "define | update | lambda | if | cond | begin"
 				   "| and | or | not | equal? | floor | ceil | trunc | round"
 				   "| zero? | first | second | nth | first! | second! | nth!"
 				   "| null? | ch_lt | ch_lte | ch_gt | ch_gte | ch_eq"
@@ -690,9 +693,9 @@ namespace psil_parser {
 				   "| abs | mod | print | println | read | quote | unquote" ) );
     
       group_t * gda = lang->add( new group_t( "DATA" ) );
+      lang->add( gda, new parser_t( "<list_def>", "(quote <datum>)" ) );
       lang->add( gda, new parser_t( "<datum>",
-				    "<boolean> | <number>"
-				    "| <character> | <symbol> | <list>" ) );
+				    "<boolean> | <number> | <character> | <symbol> | <list>" ) );
       lang->add( gda, new parser_t( "<boolean>", "#t | #f" ) );
       lang->add( gda, new parser_t( "<character>",
 				    "{^(#\\\\).(?!.)} | #\\newline | #\\space"
@@ -700,15 +703,12 @@ namespace psil_parser {
       lang->add( gda, new parser_t( "<symbol>", "<identifier>" ) );
       lang->add( gda, new parser_t( "<list>", "() | (<datum>+)" ) );
     
-    
       group_t * gn = lang->add( gda, new group_t( "NUMBERS" ) );
       lang->add( gn, new parser_t( "<number>", "<integer> | <decimal>" ) );
-      lang->add( gn, new parser_t( "<integer>", "0 | <pos_int> | <neg_int>" ) );
-      lang->add( gn, new parser_t( "<decimal>", "0.0 | <pos_dec> | <neg_dec>" ) );
-      lang->add( gn, new parser_t( "<pos_int>", "{\\+\\d+(?!\\w)}" ) );
-      lang->add( gn, new parser_t( "<neg_int>", "{-\\d+(?!\\w)}" ) );
-      lang->add( gn, new parser_t( "<pos_dec>", "{\\+\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
-      lang->add( gn, new parser_t( "<neg_dec>", "{-\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
+      lang->add( gn, new parser_t( "<integer>", "0 | {\\d+(?!\\w)} | {-\\d+(?!\\w)}" ) );
+      lang->add( gn, new parser_t( "<decimal>",
+				   "0.0 | {\\d+(?!\\w)\\.\\d+(?!\\w)}"
+				   "| {-\\d+(?!\\w)\\.\\d+(?!\\w)}" ) );
       return lang;
     } catch ( std::string exp ) {
       std::cerr << "Error: While creating language" << std::endl;

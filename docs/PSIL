@@ -9,28 +9,31 @@ DEFINITIONS:
 <definition>  -> (define <variable> <expression>)
 	      |  (update <variable> <expression>)
 <variable>    -> <identifier>
-<body>        -> <expression>+
-	      |  <definition>+ <expression>+
+
 
 EXPRESSIONS:
-<expression>  -> <constant>
+<expression>  -> (begin <expression>+)
+	      |  <constant>
               |  <variable>
-	      |  (quote <datum>)
-              |  (lambda <formals> <body>)
-              |  (if <expression> <expression> <expression>)
-	      |  (cond <expression> <expression>)
-              |  (set! <variable> <expression>)
-	      |  (begin <expression>+)
+              |  <lambda>
+	      |  <conditional>
 	      |  <application>
 
 <constant>    -> <boolean> | <number> | <character> | <list_def>
+
+<lambda>      -> (lambda <formals> <body>)
 <formals>     -> <variable> | (<variable>+)
+<body>        -> <definition>* <expression>+
+
+<conditional> -> (cond <expression> <expression>)
+	      |  (if <expression> <expression> <expression>)
+
 <application> -> (<expression>+)
 
 IDENTIFIERS:
 <identifier>  -> <keyword> | <operator> | ^[a-zA-Z_](?!.) | ^[a-zA-Z_][a-zA-Z_0-9\!]+(?!.)
-<operator>    -> + | - | * | \ | %
-<keyword>     -> define | lambda | if | cond | begin | set! | and | or | not
+<operator>    -> + | - | * | \
+<keyword>     -> define | update | lambda | if | cond | begin | set! | and | or | not
               |  equal? | floor | ceil | trunc | round | zero? | first | second | nth
 	      |  first! | second! | nth! | null? | lt | lte | gt | gte | eq 
 	      |  ch_lt | ch_lte  | ch_gt | ch_gte | ch_eq | boolean? | number?
@@ -38,19 +41,17 @@ IDENTIFIERS:
 	      |  quote | unquote
 
 DATA:
+<list_def>    -> (quote <datum>)
 <datum>	      -> <boolean> | <number> | <character> | <symbol> | <list>
 <boolean>     -> #t | #f
 <character>   -> #\<any char> | #\newline | #\space | #\oparen | #\cparen | #osqbrac | #csqbrac
 <symbol>      -> <identifier>
-<list_def>    -> (quote <datum>)
 <list>        -> () | (<datum>+)
+
+NUMBERS:
 <number>      -> <integer> | <decimal>
-<integer>     -> 0 | <pos_num> | <neg_num>
-<pos_num>     -> starts with + followed by digits
-<neg_num>     -> starts with - followed by digits
-<decimal>     -> 0.0 | <pos_dec> | <neg_dec>
-<pos_dec>     -> starts with + followed by digits . and more digits
-<pos_dec>     -> starts with - followed by digits . and more digits
+<integer>     -> 0 | starts with (-)maybe followed by digits
+<decimal>     -> 0.0 | starts with (-)maybe followed by digits . and more digits
 
 =====================================================================================================
 

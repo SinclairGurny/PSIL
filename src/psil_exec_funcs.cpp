@@ -10,7 +10,7 @@
 
 namespace psil_exec {
 
-  void apply_global_function( stack_ptr & s, token_ptr & node, bool& rem, std::string fun ) {
+  void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun ) {
     // Input / Output
     if ( fun == "print" ) {
       if ( node->aspects.size() < 4 )
@@ -32,16 +32,15 @@ namespace psil_exec {
     else if ( fun == "and" ) {
       if ( node->aspects.size() < 5 )
 	throw std::string( "and: Wrong number of arguments given, 2+ expected" );
-
+      psil_and( s, node );
     } else if ( fun == "or" ) {
       if ( node->aspects.size() < 5 )
 	throw std::string( "or: Wrong number of arguments given, 2+ expected" );
-
-
+      psil_or( s, node );
     } else if ( fun == "not" ) {
       if ( node->aspects.size() != 4 )
 	throw std::string( "not: Wrong number of arguments given, 1 expected" );
-
+      psil_not( s, node );
     } else if ( fun == "equal?" ) {
       if ( node->aspects.size() != 5 )
 	throw std::string( "equal?: Wrong number of arguments given, 2 expected" );
@@ -218,7 +217,9 @@ namespace psil_exec {
 	    if ( const_type->type_name == "<boolean>" ) {
 	      std::cout << const_type->aspects.front()->str;
 	    } else if ( const_type->type_name == "<number>" ) {
-	      // TODO
+	      auto num_type = const_type->aspects.front()->tk.get();
+	      auto val = num_type->aspects.front()->str;
+	      std::cout << val;
 	    } else if ( const_type->type_name == "<character>" ) {
 	      std::string ch = const_type->aspects.front()->str;
 	      if ( ch.size() > 3 ) {
@@ -238,6 +239,9 @@ namespace psil_exec {
 	      } else {
 		std::cout << ch.substr(2);
 	      }
+	    } else if ( const_type->type_name == "<list_def>" ) {
+	      std::cerr << "Cannot output lists yet" << std::endl;
+	      // TODO
 	    }
 	  }
 	}
@@ -252,49 +256,88 @@ namespace psil_exec {
   void psil_read( token_ptr & node ) {
     std::string str;
     std::cin >> str;
-    for ( char c : str ) {
-      // make char token, add to quote token
-    }
+    // make expression
+    // make quote parts
+    //for ( char c : str ) {
+    // make char token, add to quote token
+    // append char into quote
+    //}
+    // add final
   }
 
   // ========================= BOOLEAN OPERATIONS ================================================
   
   // Performs logical and on all arguments
   void psil_and( stack_ptr & s, token_ptr & node ) {
+    std::cout << "AND" << std::endl;
     size_t idx = 0;
-    bool result = true;
+    std::string val = "";
+    //bool result = true;
     for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++itr, ++idx ) {
       if ( idx > 1 && idx < node->aspects.size() - 1 ) { // Just arguments of function
 	if ( !is_true( s, (*itr)->tk ) ) {
-	  return false;
+	  val = "#f";
+	  break;
 	}
       }
     }
-    return true;
+    if ( val.empty() ) { val = "#t"; }
+    std::cout << "AND: " << val << std::endl;
+    node->type_name = "<constant>";
+    node->aspects.clear();
+    // create boolean token
+    auto tmp_bool = std::make_unique<psil_parser::token_t>("<boolean>");
+    // add value
+    tmp_bool->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( val ) );
+    // add boolean token to expression token
+    auto tmp_elem = std::make_unique<psil_parser::token_elem_t>(std::move(tmp_bool));
+    node->aspects.push_back( std::move( tmp_elem ) );
   }
 
   // Performs logical or on all arguments
   void psil_or( stack_ptr & s, token_ptr & node ) {
+    //std::cout << "OR" << std::endl;
     size_t idx = 0;
-    bool result = true;
+    std::string val = "";
+    //bool result = true;
     for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++itr, ++idx ) {
       if ( idx > 1 && idx < node->aspects.size() - 1 ) { // Just arguments of function
 	if ( is_true( s, (*itr)->tk ) ) {
-	  return true;
+	  val = "#t";
+	  break;
 	}
       }
     }
-    return false;
+    if ( val.empty() ) { val = "#f"; }
+    //std::cout << "OR: " << val << std::endl;
+    node->type_name = "<constant>";
+    node->aspects.clear();
+    // create boolean token
+    auto tmp_bool = std::make_unique<psil_parser::token_t>("<boolean>");
+    // add value
+    tmp_bool->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( val ) );
+    // add boolean token to expression token
+    auto tmp_elem = std::make_unique<psil_parser::token_elem_t>(std::move(tmp_bool));
+    node->aspects.push_back( std::move( tmp_elem ) );
   }
 
   // Performs logical negation on all arguments
   void psil_not( stack_ptr & s, token_ptr & node ) {
+    std::string val;
     if ( is_true( s, node->aspects[2]->tk ) ) {
-      return true;
-
+      val = "#f";
     } else {
-      return false;
+      val = "#t";
     }
+    node->type_name = "<constant>";
+    node->aspects.clear();
+    // create boolean token
+    auto tmp_bool = std::make_unique<psil_parser::token_t>("<boolean>");
+    // add value
+    tmp_bool->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( val ) );
+    // add boolean token to expression token
+    auto tmp_elem = std::make_unique<psil_parser::token_elem_t>(std::move(tmp_bool));
+    node->aspects.push_back( std::move( tmp_elem ) );
   }
 
   // Checks the two arguments for equality

@@ -29,52 +29,66 @@ namespace psil_exec {
     return tmp;
   }
 
+  bool equal_tk( const token_ptr & tk1, const token_ptr & tk2 ) {
+    if ( (tk1 == nullptr && tk2 != nullptr) || (tk1 != nullptr && tk2 == nullptr) ) return false;
+    if ( tk1->type_name != tk2->type_name ) return false;
+    if ( tk1->aspects.size() != tk2->aspects.size() ) return false;
+    auto itr1 = tk1->aspects.begin(); auto itr2 = tk2->aspects.begin();
+    for ( ; itr1 != tk1->aspects.end() && itr2 != tk2->aspects.end(); ++itr1, ++itr2 ) {
+      if ( (*itr1)->elem_type == TE_Type::STRING && (*itr1)->elem_type == TE_Type::STRING ) {
+	bool ret = equal_tk( (*itr1)->tk, (*itr2)->tk );
+	if ( !ret ) return false;
+      } else if ( (*itr1)->elem_type == TE_Type::TOKEN && (*itr1)->elem_type == TE_Type::TOKEN ) {
+	if ( (*itr1)->str != (*itr2)->str ) return false;
+      } else {
+	return false;
+      }
+    }
+    return true;
+  }
+
   // === Checks type of expression
   VarType check_type( const token_ptr & tk ) {
     if ( tk->aspects.size() == 1 && tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
-      if ( tk->aspects.front()->tk->type_name == "<constant>" ) {
+      if ( tk->aspects.front()->tk->type_name == "<constant>" ) { // CONSTANT
 	auto const_type = tk->aspects.front()->tk.get()->aspects.front()->tk.get();
 	if ( const_type->type_name == "<boolean>" ) {
 	  return VarType::BOOL;
 	} else if ( const_type->type_name == "<number>" ) {
 	  return VarType::NUM;
-	} else {
+	} else if ( const_type->type_name == "<character>" ) {
 	  return VarType::CHAR;
+	} else if ( const_type->type_name == "<list_def>" ) {
+	  return VarType::LIST;
 	}
-      } else if ( tk->aspects.front()->tk->type_name == "<variable>" ) {
+	return VarType::ERROR;
+      } else if ( tk->aspects.front()->tk->type_name == "<variable>" ) { // VARIABLE
 	std::cerr << "Cannot look up variables yet" << std::endl;
 	return VarType::UNKNOWN;
-      } else if ( tk->aspects.front()->tk->type_name == "<application>" ) {
-	// lazy eval, don't run
-	std::cerr << "Cannot run functions yet" << std::endl;
-	return VarType::UNKNOWN;
-      }
-    } else if ( tk->aspects.size() == 5 && tk->aspects[1]->elem_type == TE_Type::STRING ) {
-      if ( tk->aspects[1]->str == "lambda" ) { // LAMBDA
+      } else if ( tk->aspects.front()->tk->type_name == "<lambda>" ) { // LAMBDA
 	return VarType::PROC;
-      } else if ( tk->aspects[1]->str == "cond" ) { // COND
-	// lazy eval don't run
+      } else if ( tk->aspects.front()->tk->type_name == "<conditional>" ) { // CONDITIONAL
+	// lazy eval, don't run
 	return VarType::UNKNOWN;
-      } else if ( tk->aspects[1]->str == "set!" ) { // SET!
-	return VarType::ERROR;
+      } else if ( tk->aspects.front()->tk->type_name == "<application>" ) { // APPLICATION
+	// lazy eval, don't run
+	return VarType::UNKNOWN;
       }
-    } else if ( tk->aspects.size() == 6 && tk->aspects[1]->elem_type == TE_Type::STRING &&
-		tk->aspects[1]->str == "if" ) { // IF
-      // lazy eval, don't run
-      return VarType::UNKNOWN;
     }
     return VarType::UNKNOWN;
   }
 
   // ===================================================================================
 
+  // Push to stack
   void stack_t::push() {
     ++current_scope;
     if ( current_scope > 1000 ) {
       throw std::string( "Stack above debug limits" );
     }
   }
-
+  
+  // Pop stack
   void stack_t::pop() {
     if ( current_scope == 0 ) {
       throw std::string( "Cannot pop an empty stack" );
@@ -82,6 +96,7 @@ namespace psil_exec {
     }
   }
 
+  // Check if variable exists in symbol table
   stack_t::ExistsType stack_t::exists( std::string n ) {
     auto gret = global_table.find( n );
     if ( gret != global_table.end() )
@@ -92,6 +107,7 @@ namespace psil_exec {
     return stack_t::ExistsType::NO;
   }
 
+  // Gets variable from symbol table
   token_ptr stack_t::get( std::string n, stack_t::ExistsType e ) {
     if ( e == stack_t::ExistsType::GLOBAL ) {
       auto itr = global_table.find( n );
@@ -104,7 +120,8 @@ namespace psil_exec {
     }
     return nullptr;
   }
-  
+
+  // Adds variable and its value to symbol table
   void stack_t::add( std::string n, const token_ptr & v ) {
     VarType t = check_type( v );
     if ( t == VarType::ERROR ) throw std::string( "Could not determine type of expression" );
@@ -112,6 +129,7 @@ namespace psil_exec {
     table.insert( std::make_pair( n, std::move( se ) ) );
   }
 
+  // Updates variable's value in symbol table
   void stack_t::update( std::string n, stack_t::ExistsType e, const token_ptr & v) {
     if ( e == stack_t::ExistsType::GLOBAL ) {
       auto itr = global_table.find( n );
@@ -128,6 +146,7 @@ namespace psil_exec {
     }
   }
 
+  // Initialize global procedures in symbol table
   void stack_t::init() {
     // Logical
     auto tmp = std::make_unique<stack_elem_t>( "and", VarType::PROC, nullptr );
@@ -272,23 +291,20 @@ namespace psil_exec {
   void exec( stack_ptr & s, token_ptr & ast, bool& rem ) {
     if ( ast->type_name == "<program>" ) {
       if ( !ast->aspects.empty() && ast->aspects.front()->elem_type == TE_Type::TOKEN ) {
-	bool r = false;
-	exec( s, ast->aspects.front()->tk, r );
-	if ( r ) { // all forms erased, erase program
-	  ast->aspects.clear();
-	  rem = true;
-	}
+	exec( s, ast->aspects.front()->tk, rem );
+	// all forms erased, erase program
+	if ( rem ) ast->aspects.clear();
       }
       return;
     } else if ( ast->type_name == "<form>" ) {
-      size_t tk_count = 0, rem_count = 0;
+      size_t tk_count = 0, rm_count = 0;
       for ( auto itr = ast->aspects.begin(); itr != ast->aspects.end();  ) {
 	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
 	  ++tk_count;
 	  bool r = false;
 	  exec( s, (*itr)->tk, r );
 	  if ( r ) { // erase aspect
-	    ++rem_count;
+	    ++rm_count;
 	    ast->aspects.erase( itr );
 	    continue;
 	  }
@@ -296,41 +312,62 @@ namespace psil_exec {
 	++itr;
       }
       // all tokens erased, erase current token
-      if ( tk_count == rem_count )
+      if ( tk_count == rm_count )
 	rem = true;
+      else if ( ast->aspects.size() == 4 && tk_count > rm_count && tk_count - rm_count == 1 ) {
+	auto tmp = std::move( ast->aspects[2] );
+	ast->aspects.clear();
+	ast->aspects.push_back( std::move( tmp ) );
+      }
       return;
     } else if ( ast->type_name == "<expression>" ) {
-      if ( ast->aspects.size() == 5 && ast->aspects[1]->elem_type == TE_Type::STRING ) {
-	if ( ast->aspects[1]->str == "lambda" ) { // LAMBDA
-	  //exec_lambda( s, ast, rem );
+      std::cout << "EXP" << std::endl;
+      auto expr = ast->aspects.front()->tk.get();
+      if ( ast->aspects.size() == 1 ) {
+	if ( expr->type_name == "<constant>" ) {
+	  std::cout << "CONST" << std::endl;
 	  return;
-	} else if ( ast->aspects[1]->str == "cond" ) { // COND
-	  exec_cond( s, ast, rem );
-	} else if ( ast->aspects[1]->str == "set!" ) { // SET!
-	  rem = true; // always erase set! from AST
-	  exec_set( s, ast );
-	  return;
-	}
-      } else if ( ast->aspects.size() == 6 && ast->aspects[1]->elem_type == TE_Type::STRING &&
-		  ast->aspects[1]->str == "if" ) { // IF
-	exec_if( s, ast, rem );
-      } else if ( ast->aspects.size() == 1 && ast->aspects.front()->elem_type == TE_Type::TOKEN ) {
-	if ( ast->aspects.front()->tk->type_name == "<application>" ) { // APPLICATION
-	  exec_app( s, ast->aspects.front()->tk, rem );
-	} else if ( ast->aspects.front()->tk->type_name == "<variable>" ) { // VARIABLE
+	} else if ( expr->type_name == "<variable>" ) {
 	  exec_var( s, ast, rem );
-	} else if ( ast->aspects.front()->tk->type_name == "<constant>" ) { // CONSTANT
+	} else if ( expr->type_name == "<lambda>" ) {
+	  //exec_lambda
 	  return;
+	} else if ( expr->type_name == "<conditional>" ) {
+	  if ( expr->aspects[1]->str == "cond" ) { // COND
+	    exec_cond( s, ast, rem );
+	  } else { // IF
+	    exec_if( s, ast, rem );
+	  }
+	} else if ( expr->type_name == "<application>" ) {
+	  exec_app( s, ast->aspects.front()->tk, rem );
 	}
-      } else if ( ast->aspects.size() == 4 && ast->aspects[1]->elem_type == TE_Type::STRING &&
-		  ast->aspects[1]->str == "quote" ) { // QUOTE
+      } else if ( ast->aspects.size() >= 4 ) { // (begin <expr>+)
+	size_t tk_count = 0, rm_count = 0;
+	for ( auto itr = ast->aspects.begin(); itr != ast->aspects.end(); ) {
+	  if ( (*itr)->elem_type == TE_Type::TOKEN ) {
+	    ++tk_count;
+	    bool r = false;
+	    exec( s, ast, r );
+	    if ( r ) {
+	      ++rm_count;
+	      ast->aspects.erase( itr );
+	      continue;
+	    }
+	  }
+	  ++itr;
+	}
+	if ( tk_count == rm_count ) {
+	  rem = true;
+	} else if ( tk_count > rm_count && tk_count - rm_count == 1 ) {
+	  auto tmp = std::move( ast->aspects[2] );
+	  ast->aspects.clear();
+	  ast->aspects.push_back( std::move( tmp ) );
+	}
 	return;
       } else {
 	throw std::string( "Unknown expression type" );
-	return;
-      }
-      
-    } else if ( ast->type_name == "<definition>" ) { // DEFINITION
+      }	
+    } else if ( ast->type_name == "<definition>" ) {
       rem = true; // always erase definitions from AST
       exec_def( s, ast );
       return;
@@ -343,6 +380,7 @@ namespace psil_exec {
   
   // === Execute if expression
   void exec_if( stack_ptr & s, token_ptr & node, bool& rem ) {
+    std::cout << "IF" << std::endl;
     bool r = false;
     exec( s, node->aspects[2]->tk, r );
     if ( r || is_true( s, node->aspects[2]->tk ) ) {
@@ -362,6 +400,7 @@ namespace psil_exec {
   
   // === Execute cond expression
   void exec_cond( stack_ptr & s, token_ptr & node, bool& rem ) {
+    std::cout << "COND" << std::endl;
     bool r = false; // placeholder, not needed
     exec( s, node->aspects[2]->tk, r );
     if ( r || is_true( s, node->aspects[2]->tk ) ) {
@@ -376,34 +415,39 @@ namespace psil_exec {
     }
   }
 
-  void exec_set( stack_ptr & s, token_ptr & node ) {
-    auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
-    std::cout << "set grabbed " << iden << std::endl;
-    auto ret = s->exists( iden );
-    if ( ret == stack_t::ExistsType::GLOBAL ) {
-      throw std::string( "Cannot set! a global procedure" );
-    } else if ( ret == stack_t::ExistsType::LOCAL ) {
-      s->update( iden, ret, node->aspects[3]->tk );
-    } else { // NO - variable is not known
-      throw std::string( "Cannot set a variable that has not been defined" );
-    }
-  }
-  
   // === Execute definition
   void exec_def( stack_ptr & s, token_ptr & node ) {
-    auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
-    std::cout << "grabbed " << iden << std::endl;
-    auto ret = s->exists( iden );
-    if ( ret == stack_t::ExistsType::GLOBAL ) {
-      throw std::string( "Cannot redefine a global procedure" );
-    } else if ( ret == stack_t::ExistsType::LOCAL ) {
-      throw std::string( "Cannot redefine a local variable, use set!" );
-    } else { // NO - variable is not known
-      s->add( iden, node->aspects[3]->tk );
+    std::cout << "DEF" << std::endl;
+    if ( node->aspects[1]->str == "define" ) {
+      auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
+      std::cout << "grabbed " << iden << std::endl;
+      auto ret = s->exists( iden );
+      if ( ret == stack_t::ExistsType::GLOBAL ) {
+	throw std::string( "Cannot redefine a global procedure" );
+      } else if ( ret == stack_t::ExistsType::LOCAL ) {
+	throw std::string( "Cannot redefine a local variable, use set!" );
+      } else { // NO - variable is not known
+	s->add( iden, node->aspects[3]->tk );
+      }
+    } else if ( node->aspects[1]->str == "update" ) {
+      auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
+      std::cout << "update grabbed " << iden << std::endl;
+      auto ret = s->exists( iden );
+      if ( ret == stack_t::ExistsType::GLOBAL ) {
+	throw std::string( "Cannot set! a global procedure" );
+      } else if ( ret == stack_t::ExistsType::LOCAL ) {
+	s->update( iden, ret, node->aspects[3]->tk );
+      } else { // NO - variable is not known
+	throw std::string( "Cannot set a variable that has not been defined" );
+      }
+    } else {
+      throw std::string( "Unknown definition type" );
     }
   }
 
+  // === Execute variable expansion
   void exec_var( stack_ptr & s, token_ptr & node, bool& rem ) {
+    std::cout << "Var" << std::endl;
     auto var_name = node->aspects.front()->tk->aspects.front()->tk->aspects.front()->str;
     std::cout << "Looking for " << var_name << std::endl;
     auto ret = s->exists( var_name );
@@ -426,82 +470,77 @@ namespace psil_exec {
     // TODO
   }
 
-  // === Execute application expression
-  void exec_app( stack_ptr & s, token_ptr & node, bool& rem ) {
-    size_t idx = 0;
-    std::string func_name;
-    stack_t::ExistsType ftype;
-    // === Perform checks and get information about application
-    for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++idx ) {
-      //std::cout << "LOOP" << idx << std::endl;
-      // === If is token and first aspect is token
-      if ( (*itr)->elem_type == TE_Type::TOKEN && !(*itr)->tk->aspects.empty() &&
-	   (*itr)->tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
-	std::string exp_type = (*itr)->tk->aspects.front()->tk->type_name;
-	//std::cout << "Expression type: " << exp_type << std::endl;
-	if ( (*itr)->tk->aspects.front()->tk->type_name == "<constant>" ) {
-	  if ( idx == 1 ) { throw std::string( "Cannot apply a constant" ); }
-	  //std::cout << "Const Argument " << idx << std::endl;
-	  ++itr; continue;
-	} else if ( (*itr)->tk->aspects.front()->tk->type_name == "<variable>" ) {
-	  if ( idx == 1 ) {
-	    // ========== Grab correct function name =====================
-	    //             <expression>           <variable>         <identifier>
-	    auto iden = (*itr)->tk->aspects.front()->tk->aspects.front()->tk.get();
-	    if ( iden->aspects.front()->elem_type == TE_Type::TOKEN ) {
-	      // function name is of type <keyword> or <operator>
-	      if ( iden->aspects.front()->tk->type_name == "<operator>" ) {
-		//       <identifier>            <operator>           name
+  // === Execute application of procedures
+  void exec_app( stack_ptr & s, token_ptr & node, bool & rem ) {
+    std::cout << "App" << std::endl;
+    size_t idx = 0; // Keeps track of location within expression
+    std::string func_name; // Used to lookup proper global procedures
+    stack_t::ExistsType func_loc = stack_t::ExistsType::NO; // Says whether function is lambda or builtin
+    // === Perform checks and get info about application ===
+    for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++itr, ++idx ) {
+      if ( (*itr)->elem_type == TE_Type::TOKEN ) {
+	if ( idx == 1 ) { // Function name
+	  if ( (*itr)->tk->aspects.size() == 1 &&
+	       (*itr)->tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
+	    auto exp_tmp = (*itr)->tk->aspects.front()->tk.get();
+	    auto exp_type = exp_tmp->type_name;
+	    if ( exp_type == "<variable>" ) {
+	      //         <variable>              <identifier>
+	      auto iden = exp_tmp->aspects.front()->tk.get();
+	      if ( iden->aspects.front()->elem_type == TE_Type::TOKEN ) { // Keyword or Operator
 		func_name = iden->aspects.front()->tk->aspects.front()->str;
-		ftype = stack_t::ExistsType::GLOBAL;
-	      } else {
-		//        <identifier>          <keyword>            name
-		func_name = iden->aspects.front()->tk->aspects.front()->str;
-		ftype = s->exists( func_name );
-		if ( ftype != stack_t::ExistsType::GLOBAL ) {
-		  throw std::string( "Error while applying function" );
-		  return;
+		if ( iden->aspects.front()->tk->type_name == "<operator>" ) {
+		  func_loc = stack_t::ExistsType::GLOBAL;
+		} else {
+		  func_loc = s->exists( func_name );
+		  if ( func_loc != stack_t::ExistsType::GLOBAL ) {
+		    throw std::string( "Could not find proc" );
+		  }
 		}
+	      } else { // Locally defined operation
+		throw std::string( "Error in application: Not a procedure, identifier found" );
 	      }
-	    } else { // === Locally defined function name
-	      //        <identifier>          name
-	      func_name = iden->aspects.front()->str;
-	      ftype = s->exists( func_name );
-	      if ( ftype != stack_t::ExistsType::LOCAL ) {
-		throw std::string( "Cannot find function name" );
+	    } else if ( exp_type == "<lambda>" ) {
+	      throw std::string( "Lambda evaluation is not yet implmented" );
+	      func_loc = stack_t::ExistsType::LOCAL;
+	    } else if ( exp_type == "<constant>" ) {
+	      throw std::string( "Cannot apply a constant" );
+	    } else {
+	      bool r = false;
+	      exec( s, (*itr)->tk, r );
+	      if ( r )
+		throw std::string( "Missing function in application expression" );
+	      else {
+		exec_app( s, node, rem );
 		return;
 	      }
-	      throw std::string( "Cannot run locally defined functions yet" );
+	      //throw std::string( "Error Application: Not a procedure, not valid expression" );
 	    }
-	    // === Check for more errors
-	    //std::cout << "Application grabbed: " << func_name << std::endl;
-	    ftype = s->exists( func_name );
-	    if ( ftype == stack_t::ExistsType::NO ) {
-	      throw std::string( "Function name not defined" );
+	  } else {
+	    bool r = false;
+	    exec( s, (*itr)->tk, r );
+	    if ( r )
+	      throw std::string( "Missing function in application expression" );
+	    else {
+	      exec_app( s, node, rem );
 	      return;
 	    }
-	  } else { // Execute expressions used as arguments
-	    //std::cout << "Argument Variable " << idx << " expanded"<< std::endl;
-	    bool r = false;
-	    exec( s, (*itr)->tk, r);
-	    if ( r ) node->aspects.erase( itr );
-	    else ++itr;
-	    continue;
+	      
+
+	    //throw std::string( "Error while applying function, not a procedure, unknown expression" );
 	  }
-	} else { // Not const or variable
-	  //std::cout << "Expression Argument expanded" << idx << std::endl;
+	} else if ( idx > 1 && idx < (node->aspects.size()-1) ) { // Arguments
 	  bool r = false;
-	  exec( s, (*itr)->tk, r);
+	  exec( s, (*itr)->tk, r );
 	  if ( r ) node->aspects.erase( itr );
-	  throw std::string( "Cannot run application in current format yet" );
-	  return;
 	}
       }
-      ++itr;
     }
-    // == Apply function
-    if ( ftype == stack_t::ExistsType::GLOBAL ) {
-      apply_global_function( s, node, rem, func_name );
+    // === Run operations ===
+    if ( func_loc == stack_t::ExistsType::GLOBAL ) {
+      apply_global_proc( s, node, rem, func_name );
+    } else if ( func_loc == stack_t::ExistsType::LOCAL ) {
+      // Run lambda expression
     }
   }
   
