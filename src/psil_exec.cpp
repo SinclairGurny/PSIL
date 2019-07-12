@@ -12,6 +12,7 @@ namespace psil_exec {
 
   // ===================================================================================
 
+  // Copies tk and returns an identical token tree
   token_ptr copy_tk( const token_ptr & tk ) {
     if ( tk == nullptr ) return nullptr;
     token_ptr tmp( new psil_parser::token_t( tk->type_name ) );
@@ -29,22 +30,45 @@ namespace psil_exec {
     return tmp;
   }
 
+  // Compares tk1 and tk2 structure and content for being identical
   bool equal_tk( const token_ptr & tk1, const token_ptr & tk2 ) {
     if ( (tk1 == nullptr && tk2 != nullptr) || (tk1 != nullptr && tk2 == nullptr) ) return false;
     if ( tk1->type_name != tk2->type_name ) return false;
     if ( tk1->aspects.size() != tk2->aspects.size() ) return false;
     auto itr1 = tk1->aspects.begin(); auto itr2 = tk2->aspects.begin();
     for ( ; itr1 != tk1->aspects.end() && itr2 != tk2->aspects.end(); ++itr1, ++itr2 ) {
-      if ( (*itr1)->elem_type == TE_Type::STRING && (*itr1)->elem_type == TE_Type::STRING ) {
+      if ( (*itr1)->elem_type == TE_Type::TOKEN && (*itr1)->elem_type == TE_Type::TOKEN ) {
 	bool ret = equal_tk( (*itr1)->tk, (*itr2)->tk );
 	if ( !ret ) return false;
-      } else if ( (*itr1)->elem_type == TE_Type::TOKEN && (*itr1)->elem_type == TE_Type::TOKEN ) {
+      } else if ( (*itr1)->elem_type == TE_Type::STRING && (*itr1)->elem_type == TE_Type::STRING ) {
 	if ( (*itr1)->str != (*itr2)->str ) return false;
       } else {
 	return false;
       }
     }
     return true;
+  }
+
+  // Finds token What in token Where and replaces occurence of What with That
+  bool find_replace( token_ptr & where, const token_ptr & what, token_ptr & that ) {
+    if ( where == nullptr ) { return false; }
+    bool is_expr = where->type_name == "<expression>" && where->aspects.size() == 1
+      && where->aspects.front()->elem_type == TE_Type::TOKEN;
+    if ( is_expr && equal_tk( where->aspects.front()->tk, what ) ) {
+      // Found location
+      where.reset();
+      where = std::move( that );
+      return true;
+    } else {
+      // Keep looking
+      for ( auto itr = where->aspects.begin(); itr != where->aspects.end(); ++itr ) {
+	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
+	  bool ret = find_replace( (*itr)->tk, what, that );
+	  if ( ret ) return true;
+	}
+      }
+    }
+    return false;
   }
 
   // === Checks type of expression
@@ -354,7 +378,7 @@ namespace psil_exec {
 	  exec( s, (*itr)->tk, r );
 	  if ( r ) { // erase aspect
 	    ++rm_count;
-	    ast->aspects.erase( itr );
+	    itr = ast->aspects.erase( itr );
 	    continue;
 	  }
 	}
@@ -399,7 +423,7 @@ namespace psil_exec {
 	    exec( s, (*itr)->tk, r );
 	    if ( r ) {
 	      ++rm_count;
-	      ast->aspects.erase( itr );
+	      itr = ast->aspects.erase( itr );
 	      continue;
 	    }
 	  }
@@ -408,16 +432,10 @@ namespace psil_exec {
 	if ( tk_count == rm_count ) {
 	  rem = true;
 	} else if ( tk_count > rm_count && tk_count - rm_count == 1 ) {
-	  // TODO - make sure this works
-	  //auto tmp = std::move( ast->aspects[2] );
-	  //ast->aspects.clear();
-	  //ast->aspects.push_back( std::move( tmp ) );
-	  //ast = std::move( tmp );
 	  auto tmp = std::move( ast->aspects[2] );
 	  ast->type_name = tmp->tk->type_name;
 	  ast->aspects.clear();
 	  std::move( tmp->tk->aspects.begin(), tmp->tk->aspects.end(), std::back_inserter( ast->aspects ) );
-
 	}
 	return;
       } else {
@@ -614,7 +632,29 @@ namespace psil_exec {
 
     // Substitute arguments
     // TODO
+    // write replace_token( where, old_tk, new_tk );
+    // loop over lambda arguments
+    //   grab next application argument
+    //   replace_token( ... )
+    auto lambda_end = lambda->aspects[2]->tk.get();
+    auto litr = lambda->aspects[2]->tk->aspects.begin();
+    std::advance( litr, 1 );
+    auto aitr = app->aspects.begin();
+    std::advance( aitr, 2 );
 
+    for ( ; litr != lambda_end->aspects.end() && (*litr)->elem_type == TE_Type::TOKEN;  ) {
+      std::cout << "--------------------" << std::endl;
+      (*litr)->tk->print();
+      std::cout << "====" << std::endl;
+      (*aitr)->tk->print();
+      // Replace arguments
+      find_replace( lambda->aspects[3]->tk, (*litr)->tk, (*aitr)->tk );
+      // Erase arguments from lambda and application
+      (*litr).reset(); (*aitr).reset();
+      litr = lambda->aspects[2]->tk->aspects.erase( litr );
+      aitr = app->aspects.erase( aitr );
+    }
+    
     // Check arguments again
     lambda_args = lambda->aspects[2]->tk->aspects.size() - 2;
     app_args = app->aspects.size() - 3;
@@ -633,10 +673,6 @@ namespace psil_exec {
     node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( ")" ) );
     node->print();
 
-    // write replace_token( where, old_tk, new_tk );
-    // loop over lambda arguments
-    //   grab next application argument
-    //   replace_token( ... )
   }
 
 }

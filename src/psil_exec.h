@@ -10,6 +10,8 @@
 
 #include "psil_parser.h"
 #include "psil_eval.h"
+#include <iterator>
+#include <functional>
 
 namespace psil_exec {
 
@@ -26,6 +28,7 @@ namespace psil_exec {
   enum VarType { BOOL, CHAR, NUM, LIST, PROC, UNKNOWN, ERROR };
   
   // ===================================================================================
+  // Internal Helper Functions
   
   /**
      Copies token recursively
@@ -37,6 +40,12 @@ namespace psil_exec {
   */
   bool equal_tk( const token_ptr & tk1, const token_ptr & tk2 );
 
+  /**
+     Finds token what within token where, and replaces occurence with token that
+     that is moved to the new location
+  */
+  bool find_replace( token_ptr & where, const token_ptr & what, token_ptr & that );
+  
   /**
      Checks type of token
      Assumes top level token is an expression
