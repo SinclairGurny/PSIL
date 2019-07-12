@@ -682,7 +682,7 @@ namespace psil_parser {
       lang->add( gi, new parser_t( "<identifier>",
 				   "<keyword> | <operator> | {^[a-zA-Z_](?!.)}"
 				   "| {^[a-zA-Z_][a-zA-Z_0-9\\!]+(?!.)}" ) );
-      lang->add( gi, new parser_t( "<operator>", "+ | - | * | \\" ) );
+      lang->add( gi, new parser_t( "<operator>", "+ | - | * | /" ) );
       lang->add( gi, new parser_t( "<keyword>",
 				   "define | update | lambda | if | cond | begin"
 				   "| and | or | not | equal? | floor | ceil | trunc | round"

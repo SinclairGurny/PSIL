@@ -194,11 +194,11 @@ namespace psil_exec {
   void psil_eq( stack_ptr & s, token_ptr & node );
   void psil_is_zero( stack_ptr & s, token_ptr & node );
   // Character
-  void psil_chlt( stack_ptr & s, token_ptr & node );
-  void psil_chlte( stack_ptr & s, token_ptr & node );
-  void psil_chgt( stack_ptr & s, token_ptr & node );
-  void psil_chgte( stack_ptr & s, token_ptr & node );
-  void psil_cheq( stack_ptr & s, token_ptr & node );
+  void psil_ch_lt( stack_ptr & s, token_ptr & node );
+  void psil_ch_lte( stack_ptr & s, token_ptr & node );
+  void psil_ch_gt( stack_ptr & s, token_ptr & node );
+  void psil_ch_gte( stack_ptr & s, token_ptr & node );
+  void psil_ch_eq( stack_ptr & s, token_ptr & node );
   // List
   void psil_first( stack_ptr & s, token_ptr & node );
   void psil_second( stack_ptr & s, token_ptr & node );
