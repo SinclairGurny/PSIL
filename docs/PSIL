@@ -12,7 +12,7 @@ DEFINITIONS:
 
 
 EXPRESSIONS:
-<expression>  -> (begin <expression>+)
+<expression>  -> (begin <definition>* <expression>+)
 	      |  <constant>
               |  <variable>
               |  <lambda>
@@ -23,7 +23,7 @@ EXPRESSIONS:
 
 <lambda>      -> (lambda <formals> <body>)
 <formals>     -> (<variable>*)
-<body>        -> <definition>* <expression>+
+<body>        -> <expression>
 
 <conditional> -> (cond <expression> <expression>)
 	      |  (if <expression> <expression> <expression>)

@@ -2,7 +2,7 @@
     psil_exec.cpp
     PSIL Execution Implementation
     @author Sinclair Gurny
-    @version 0.1
+    @version 0.5
     July 2019
 */
 
@@ -328,9 +328,9 @@ namespace psil_exec {
     
     auto ast = psil_parser::parse( lang, input );
     if ( ast ) {
-      
+#ifdef DEBUG_MODE
       ast->print();
-      
+#endif      
       // eval
       try {
 	if ( !psil_eval::check_node( ast.get() ) )
@@ -345,9 +345,11 @@ namespace psil_exec {
 	bool rem = false;
 	auto stack = std::make_unique<stack_t>();
 	exec( stack, ast, rem );
+#ifdef DEBUG_MODE
 	if ( !rem ) {
 	  ast->print();
 	}
+#endif	
 	std::cout << std::endl;
       } catch ( std::string exp ) {
 	std::cerr << "Runtime error:: " << exp << std::endl;
@@ -395,11 +397,15 @@ namespace psil_exec {
       }
       return;
     } else if ( ast->type_name == "<expression>" ) {
+#ifdef DEBUG_MODE
       std::cout << "EXP" << std::endl;
+#endif
       auto expr = ast->aspects.front()->tk.get();
       if ( ast->aspects.size() == 1 ) {
 	if ( expr->type_name == "<constant>" ) {
+#ifdef DEBUG_MODE
 	  std::cout << "CONST" << std::endl;
+#endif
 	  return;
 	} else if ( expr->type_name == "<variable>" ) {
 	  exec_var( s, ast, rem );
@@ -454,8 +460,10 @@ namespace psil_exec {
   
   // === Execute if expression
   void exec_if( stack_ptr & s, token_ptr & node, bool& rem ) {
-    auto cond = node->aspects.front()->tk.get();
+#ifdef DEBUG_MODE
     std::cout << "IF" << std::endl;
+#endif
+    auto cond = node->aspects.front()->tk.get();
     bool r = false;
     exec( s, cond->aspects[2]->tk, r );
     if ( r || is_true( s, cond->aspects[2]->tk ) ) {
@@ -471,8 +479,10 @@ namespace psil_exec {
   
   // === Execute cond expression
   void exec_cond( stack_ptr & s, token_ptr & node, bool& rem ) {
-    auto cond = node->aspects.front()->tk.get();
+#ifdef DEBUG_MODE
     std::cout << "COND" << std::endl;
+#endif
+    auto cond = node->aspects.front()->tk.get();
     bool r = false; // placeholder, not needed
     exec( s, cond->aspects[2]->tk, r );
     if ( r || is_true( s, cond->aspects[2]->tk ) ) {
@@ -487,10 +497,14 @@ namespace psil_exec {
 
   // === Execute definition
   void exec_def( stack_ptr & s, token_ptr & node ) {
+#ifdef DEBUG_MODE
     std::cout << "DEF" << std::endl;
+#endif
     if ( node->aspects[1]->str == "define" ) {
       auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
+#ifdef DEBUG_MODE
       std::cout << "grabbed " << iden << std::endl;
+#endif
       auto ret = s->exists( iden );
       if ( ret == stack_t::ExistsType::GLOBAL ) {
 	throw std::string( "Cannot redefine a global procedure" );
@@ -501,7 +515,9 @@ namespace psil_exec {
       }
     } else if ( node->aspects[1]->str == "update" ) {
       auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
+#ifdef DEBUG_MODE
       std::cout << "update grabbed " << iden << std::endl;
+#endif
       auto ret = s->exists( iden );
       if ( ret == stack_t::ExistsType::GLOBAL ) {
 	throw std::string( "Cannot set! a global procedure" );
@@ -517,9 +533,13 @@ namespace psil_exec {
 
   // === Execute variable expansion
   void exec_var( stack_ptr & s, token_ptr & node, bool& rem ) {
+#ifdef DEBUG_MODE
     std::cout << "Var" << std::endl;
+#endif
     auto var_name = node->aspects.front()->tk->aspects.front()->tk->aspects.front()->str;
+#ifdef DEBUG_MODE
     std::cout << "Looking for " << var_name << std::endl;
+#endif
     auto ret = s->exists( var_name );
     if ( ret == stack_t::ExistsType::GLOBAL ) {
       std::cerr <<  "Cannot access global procedures yet" << std::endl;
@@ -537,7 +557,9 @@ namespace psil_exec {
 
   // === Execute application of procedures
   void exec_app( stack_ptr & s, token_ptr & node, bool & rem ) {
+#ifdef DEBUG_MODE
     std::cout << "App" << std::endl;
+#endif
     size_t idx = 0; // Keeps track of location within expression
     std::string func_name; // Used to lookup proper global procedures
     stack_t::ExistsType func_loc = stack_t::ExistsType::NO; // Says whether function is lambda or builtin
@@ -596,7 +618,6 @@ namespace psil_exec {
 	      exec_app( s, node->aspects.front()->tk, rem );
 	      return;
 	    }
-	    //throw std::string( "Error while applying function, not a procedure, unknown expression" );
 	  }
 	} else if ( idx > 1 && idx < (node->aspects.front()->tk->aspects.size()-1) ) { // Arguments
 	  bool r = false;
@@ -620,7 +641,6 @@ namespace psil_exec {
     auto app = node->aspects.front()->tk.get();
     //           <application>     <expression>        <lambda>
     auto lambda = app->aspects[1]->tk->aspects.front()->tk.get();
-    std::cout << app->type_name << ":" << lambda->type_name << std::endl;
 
     size_t lambda_args = lambda->aspects[2]->tk->aspects.size() - 2;
     size_t app_args = app->aspects.size() - 3;
@@ -631,11 +651,6 @@ namespace psil_exec {
     }
 
     // Substitute arguments
-    // TODO
-    // write replace_token( where, old_tk, new_tk );
-    // loop over lambda arguments
-    //   grab next application argument
-    //   replace_token( ... )
     auto lambda_end = lambda->aspects[2]->tk.get();
     auto litr = lambda->aspects[2]->tk->aspects.begin();
     std::advance( litr, 1 );
@@ -643,10 +658,6 @@ namespace psil_exec {
     std::advance( aitr, 2 );
 
     for ( ; litr != lambda_end->aspects.end() && (*litr)->elem_type == TE_Type::TOKEN;  ) {
-      std::cout << "--------------------" << std::endl;
-      (*litr)->tk->print();
-      std::cout << "====" << std::endl;
-      (*aitr)->tk->print();
       // Replace arguments
       find_replace( lambda->aspects[3]->tk, (*litr)->tk, (*aitr)->tk );
       // Erase arguments from lambda and application
@@ -671,8 +682,6 @@ namespace psil_exec {
       node->aspects.push_back( std::move( *itr ) );
     }
     node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( ")" ) );
-    node->print();
-
   }
 
 }

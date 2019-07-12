@@ -18,6 +18,9 @@ Stands for Programming Some Idiotic Lisp.
 
 PSIL is a WIP interpreter for my own version of a LISP like language
 
+Current version 0.5
+-- Missing a lot of builtin procedures
+
 written by Sinclair Gurny
 Starting in July 2019
 
