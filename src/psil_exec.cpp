@@ -339,7 +339,7 @@ namespace psil_exec {
 	    exec_if( s, ast, rem );
 	  }
 	} else if ( expr->type_name == "<application>" ) {
-	  exec_app( s, ast->aspects.front()->tk, rem );
+	  exec_app( s, ast, rem );
 	}
       } else if ( ast->aspects.size() >= 4 ) { // (begin <expr>+)
 	size_t tk_count = 0, rm_count = 0;
@@ -477,7 +477,8 @@ namespace psil_exec {
     std::string func_name; // Used to lookup proper global procedures
     stack_t::ExistsType func_loc = stack_t::ExistsType::NO; // Says whether function is lambda or builtin
     // === Perform checks and get info about application ===
-    for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++itr, ++idx ) {
+    auto itr = node->aspects.front()->tk->aspects.begin();
+    for ( ; itr != node->aspects.front()->tk->aspects.end(); ++itr, ++idx ) {
       if ( (*itr)->elem_type == TE_Type::TOKEN ) {
 	if ( idx == 1 ) { // Function name
 	  if ( (*itr)->tk->aspects.size() == 1 &&
@@ -522,17 +523,17 @@ namespace psil_exec {
 	    if ( r )
 	      throw std::string( "Missing function in application expression" );
 	    else {
-	      exec_app( s, node, rem );
+	      exec_app( s, node->aspects.front()->tk, rem );
 	      return;
 	    }
 	      
 
 	    //throw std::string( "Error while applying function, not a procedure, unknown expression" );
 	  }
-	} else if ( idx > 1 && idx < (node->aspects.size()-1) ) { // Arguments
+	} else if ( idx > 1 && idx < (node->aspects.front()->tk->aspects.size()-1) ) { // Arguments
 	  bool r = false;
 	  exec( s, (*itr)->tk, r );
-	  if ( r ) node->aspects.erase( itr );
+	  if ( r ) node->aspects.front()->tk->aspects.erase( itr );
 	}
       }
     }
