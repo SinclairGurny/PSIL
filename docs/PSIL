@@ -22,7 +22,7 @@ EXPRESSIONS:
 <constant>    -> <boolean> | <number> | <character> | <list_def>
 
 <lambda>      -> (lambda <formals> <body>)
-<formals>     -> <variable> | (<variable>+)
+<formals>     -> (<variable>*)
 <body>        -> <definition>* <expression>+
 
 <conditional> -> (cond <expression> <expression>)

@@ -741,6 +741,7 @@ namespace psil_exec {
   void psil_trunc( stack_ptr & s, token_ptr & node ) {}
   void psil_round( stack_ptr & s, token_ptr & node ) {}
   // Inequalities
+  // TODO - write these by taking a lambda comparator
   void psil_lt( stack_ptr & s, token_ptr & node ) {}
   void psil_lte( stack_ptr & s, token_ptr & node ) {}
   void psil_gt( stack_ptr & s, token_ptr & node ) {}
@@ -748,6 +749,7 @@ namespace psil_exec {
   void psil_eq( stack_ptr & s, token_ptr & node ) {}
   void psil_is_zero( stack_ptr & s, token_ptr & node ) {}
   // Character
+  // TODO - write these by taking a lambda comparator
   void psil_ch_lt( stack_ptr & s, token_ptr & node ) {}
   void psil_ch_lte( stack_ptr & s, token_ptr & node ) {}
   void psil_ch_gt( stack_ptr & s, token_ptr & node ) {}

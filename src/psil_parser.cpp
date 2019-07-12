@@ -659,23 +659,23 @@ namespace psil_parser {
       group_t * gd = lang->add( new group_t( "DEFINITIONS" ) );
       lang->add( gd, new parser_t( "<definition>",
 				   "(define <variable> <expression>)"
-				   "(update <variable> <expression>)" ) );
+				   "| (update <variable> <expression>)" ) );
       lang->add( gd, new parser_t( "<variable>", "<identifier>" ) );
       
       group_t * ge = lang->add( new group_t( "EXPRESSIONS" ) );
       lang->add( ge, new parser_t( "<expression>",
-				   "(begin <expression>+) | <constant> | <variable>"
+				   "(begin <definition>* <expression>+) | <constant> | <variable>"
 				   "| <lambda> | <conditional> | <application>" ) );
 	
       lang->add( ge, new parser_t( "<constant>", "<boolean> | <number> | <character> | <list_def>" ) );
 
       lang->add( ge, new parser_t( "<lambda>", "(lambda <formals> <body>)" ) );
-      lang->add( ge, new parser_t( "<formals>", "<variable> | (<variable>+)" ) );
-      lang->add( gd, new parser_t( "<body>", "<definition>* <expression>+" ) );
+      lang->add( ge, new parser_t( "<formals>", "(<variable>*)" ) );
+      lang->add( gd, new parser_t( "<body>", "<expression>") );
 	    
       lang->add( ge, new parser_t( "<conditional>",
 				   "(cond <expression> <expression>)"
-				   "(if <expression> <expression> <expression>)") );
+				   "| (if <expression> <expression> <expression>)") );
       lang->add( ge, new parser_t( "<application>", "(<expression>+)" ) );
 		 
       group_t * gi = lang->add( new group_t( "IDENTIFIERS" ) );
