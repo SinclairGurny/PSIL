@@ -2,7 +2,7 @@
    psil_exec_funcs.cpp
    PSIL Execution Library Global function implementations
    @author Sinclair Gurny
-   @version 0.1
+   @version 0.5
    July 2019
 */
 
@@ -49,7 +49,7 @@ namespace psil_exec {
     } else if ( fun == "equal?" ) {
       if ( arg_count != 2 )
 	throw std::string( "equal?: Wrong number of arguments given, 2 expected" );
-
+      psil_is_equal( s, node );
     }
     // Arithmetic
     else if ( fun == "+" ) {
@@ -377,8 +377,8 @@ namespace psil_exec {
     }
     if ( val.empty() ) { val = "#f"; }
     //std::cout << "OR: " << val << std::endl;
-    node->type_name = "<constant>";
-    node->aspects.clear();
+    node->aspects.front()->tk->type_name = "<constant>";
+    node->aspects.front()->tk->aspects.clear();
     // create boolean token
     auto tmp_bool = std::make_unique<psil_parser::token_t>("<boolean>");
     // add value
@@ -391,25 +391,41 @@ namespace psil_exec {
   // Performs logical negation on all arguments
   void psil_not( stack_ptr & s, token_ptr & node ) {
     std::string val;
-    if ( is_true( s, node->aspects[2]->tk ) ) {
+    if ( is_true( s, node->aspects.front()->tk->aspects[2]->tk ) ) {
       val = "#f";
     } else {
       val = "#t";
     }
-    node->type_name = "<constant>";
-    node->aspects.clear();
+    node->aspects.front()->tk->type_name = "<constant>";
+    node->aspects.front()->tk->aspects.clear();
     // create boolean token
     auto tmp_bool = std::make_unique<psil_parser::token_t>("<boolean>");
     // add value
     tmp_bool->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( val ) );
     // add boolean token to expression token
     auto tmp_elem = std::make_unique<psil_parser::token_elem_t>(std::move(tmp_bool));
-    node->aspects.push_back( std::move( tmp_elem ) );
+    node->aspects.front()->tk->aspects.push_back( std::move( tmp_elem ) );
   }
 
   // Checks the two arguments for equality
   void psil_is_equal( stack_ptr & s, token_ptr & node ) {
-    // use token eq
+    std::string val;
+    auto app = node->aspects.front()->tk.get();
+    if ( equal_tk( app->aspects[2]->tk, app->aspects[3]->tk ) ) {
+      val = "#t";
+    } else {
+      val = "#f";
+    }
+    
+    node->aspects.front()->tk->type_name = "<constant>";
+    node->aspects.front()->tk->aspects.clear();
+    // create boolean token
+    auto tmp_bool = std::make_unique<psil_parser::token_t>("<boolean>");
+    // add value
+    tmp_bool->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( val ) );
+    // add boolean token to expression token
+    auto tmp_elem = std::make_unique<psil_parser::token_elem_t>( std::move(tmp_bool) );
+    node->aspects.front()->tk->aspects.push_back( std::move( tmp_elem ) );
   }
   // ==================================== MATH ========================================================
   // Operators
@@ -741,6 +757,7 @@ namespace psil_exec {
   void psil_trunc( stack_ptr & s, token_ptr & node ) {}
   void psil_round( stack_ptr & s, token_ptr & node ) {}
   // Inequalities
+  // TODO - write these by taking a lambda comparator
   void psil_lt( stack_ptr & s, token_ptr & node ) {}
   void psil_lte( stack_ptr & s, token_ptr & node ) {}
   void psil_gt( stack_ptr & s, token_ptr & node ) {}
@@ -748,6 +765,7 @@ namespace psil_exec {
   void psil_eq( stack_ptr & s, token_ptr & node ) {}
   void psil_is_zero( stack_ptr & s, token_ptr & node ) {}
   // Character
+  // TODO - write these by taking a lambda comparator
   void psil_ch_lt( stack_ptr & s, token_ptr & node ) {}
   void psil_ch_lte( stack_ptr & s, token_ptr & node ) {}
   void psil_ch_gt( stack_ptr & s, token_ptr & node ) {}

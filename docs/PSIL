@@ -12,7 +12,7 @@ DEFINITIONS:
 
 
 EXPRESSIONS:
-<expression>  -> (begin <expression>+)
+<expression>  -> (begin <definition>* <expression>+)
 	      |  <constant>
               |  <variable>
               |  <lambda>
@@ -22,8 +22,8 @@ EXPRESSIONS:
 <constant>    -> <boolean> | <number> | <character> | <list_def>
 
 <lambda>      -> (lambda <formals> <body>)
-<formals>     -> <variable> | (<variable>+)
-<body>        -> <definition>* <expression>+
+<formals>     -> (<variable>*)
+<body>        -> <expression>
 
 <conditional> -> (cond <expression> <expression>)
 	      |  (if <expression> <expression> <expression>)

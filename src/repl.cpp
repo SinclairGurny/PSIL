@@ -37,7 +37,7 @@ int main( int argc, char ** argv ) {
   std::cout << "     ***\\/_/*******\\/________/**\\/______/***\\/_______/*\n";
   std::cout << "      *************************************************\n\n";
   std::cout << "\"It's like LISP but not!\"\n\n";
-  std::cout << "==== PSIL REPL v0.1 =====\n";
+  std::cout << "==== PSIL REPL v0.5 =====\n";
   std::cout << "Press Ctrl+C to Exit\n" << std::endl;
 
   // === Setup ===
