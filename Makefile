@@ -75,5 +75,5 @@ build/repl.o: $(ALL_H) $(ALL_CPP)
 	g++ $(FLAGS) -c src/repl.cpp $(LIBS) -o build/repl.o
 
 clean:
-	$(RM) psil psil_debug *~ src/*~ docs/*~
+	$(RM) psil psil_debug *~ src/*~ docs/*~ examples/*~
 	$(RM) -rf build

@@ -1,4 +1,5 @@
-/* PSIL REPL code
+/* 
+ * PSIL REPL code
  * Written by Sinclair Gurny
  * July 2019
  */
@@ -24,6 +25,22 @@ void exitHandler( int signum ) {
 }
 
 int main( int argc, char ** argv ) {
+  // === Setup ===
+  signal( SIGINT, exitHandler);
+  // Make PSIL Language
+  auto psil_lang = psil::make_psil_lang();
+
+  // === Run PSIL source code file ===
+  if ( argc > 1 ) {
+    std::string filename(argv[1]);
+    size_t pos = filename.find( ".psil" );
+    if ( pos != std::string::npos && pos == filename.size()-5) {
+      psil::run_file( psil_lang, filename );
+    }
+    return 0;
+  }
+      
+
   
   std::cout << "\n***********************************************\n";
   std::cout << "***_______*****_________****_______****___******\n";
@@ -40,10 +57,6 @@ int main( int argc, char ** argv ) {
   std::cout << "==== PSIL REPL v0.5 =====\n";
   std::cout << "Press Ctrl+C to Exit\n" << std::endl;
 
-  // === Setup ===
-  signal( SIGINT, exitHandler);
-  // Make PSIL Language
-  auto psil_lang = psil::make_psil_lang();
     
   // === REPL ===
   while ( true ) {

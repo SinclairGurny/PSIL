@@ -372,6 +372,54 @@ namespace psil_exec {
       std::cerr << "Error while parsing input" << std::endl;
     }
   }
+
+  void run_file( const std::unique_ptr<psil_parser::language_t> & lang, std::string filename ) {
+
+    // Read contents from file
+    std::ifstream code( filename );
+    if ( !code.good() ) {
+      std::cerr << "Could not open file" << std::endl;
+    }
+
+    std::string input;
+    std::string tmp;
+    while ( code >> tmp ) { input += tmp + " "; }
+#ifdef DEBUG_MODE
+    std::cout << input << std::endl;
+#endif
+    
+    auto ast = psil_parser::parse( lang, input );
+    if ( ast ) {
+#ifdef DEBUG_MODE
+      ast->print();
+#endif      
+      // eval
+      try {
+	if ( !psil_eval::check_node( ast.get() ) )
+	std::cerr << "Unknown Error while verifying code!" << std::endl;
+      } catch ( std::string exp ) {
+	std::cerr << "Error while verifying code:: " << exp << std::endl;
+	return;
+      }
+      
+      // exec
+      try {
+	bool rem = false;
+	auto stack = std::make_unique<stack_t>();
+	exec( stack, ast, rem );
+#ifdef DEBUG_MODE
+	if ( !rem ) {
+	  ast->print();
+	}
+#endif	
+      } catch ( std::string exp ) {
+	std::cerr << "Runtime error:: " << exp << std::endl;
+      }
+      
+    } else {
+      std::cerr << "Error while parsing input" << std::endl;
+    }
+  }
   
   // ===================================================================================
   

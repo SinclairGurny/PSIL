@@ -12,6 +12,7 @@
 #include "psil_eval.h"
 #include <iterator>
 #include <functional>
+#include <fstream>
 
 namespace psil_exec {
 
@@ -106,6 +107,8 @@ namespace psil_exec {
      @param input - input to evaluate
   */
   void repl( const std::unique_ptr<psil_parser::language_t> & lang, std::string input );
+
+  void run_file( const std::unique_ptr<psil_parser::language_t> & lang, std::string filename );
 
   // ================== Exec functions ================================================
   

@@ -15,4 +15,5 @@
 namespace psil {
   auto make_psil_lang = psil_parser::make_psil_lang;
   auto repl = psil_exec::repl;
+  auto run_file = psil_exec::run_file;
 }
