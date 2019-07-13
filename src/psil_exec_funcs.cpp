@@ -147,40 +147,40 @@ namespace psil_exec {
     }
     // List  ==========================================================================
     else if ( fun == "first" ) {
-      if ( arg_count != 2 )
-	throw std::string( "first: Wrong number of arguments given, 1+ expected" );
-
+      if ( arg_count != 1 )
+	throw std::string( "first: Wrong number of arguments given, 1 expected" );
+      psil_get_list( node, 0 );
     } else if ( fun == "second" ) {
-      if ( arg_count != 2 )
-	throw std::string( "second: Wrong number of arguments given, 1+ expected" );
-
+      if ( arg_count != 1 )
+	throw std::string( "second: Wrong number of arguments given, 1 expected" );
+      psil_get_list( node, 1 );
     } else if ( fun == "nth" ) {
       if ( arg_count != 2 )
-	throw std::string( "nth: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "nth: Wrong number of arguments given, 2 expected" );
+      psil_get_nth( node );
     } else if ( fun == "first!" ) {
       if ( arg_count != 2 )
-	throw std::string( "first!: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "first!: Wrong number of arguments given, 2 expected" );
+      psil_set_list( node, 0 );
     } else if ( fun == "second!" ) {
       if ( arg_count != 2 )
-	throw std::string( "second: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "second: Wrong number of arguments given, 2 expected" );
+      psil_set_list( node, 1 );
     } else if ( fun == "nth!" ) {
-      if ( arg_count != 2 )
-	throw std::string( "nth: Wrong number of arguments given, 1+ expected" );
-
+      if ( arg_count != 3 )
+	throw std::string( "nth: Wrong number of arguments given, 3 expected" );
+      
     } else if ( fun == "null?" ) {
       if ( arg_count != 1 )
-	throw std::string( "null?: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "null?: Wrong number of arguments given, 1 expected" );
 
     } else if ( fun == "quote" ) {
       if ( arg_count != 1 )
-	throw std::string( "quote: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "quote: Wrong number of arguments given, 1 expected" );
 
     } else if ( fun == "unquote" ) {
       if ( arg_count != 1 )
-	throw std::string( "unquote: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "unquote: Wrong number of arguments given, 1 expected" );
 
     }
     // Identity  ====================================================================
@@ -307,8 +307,7 @@ namespace psil_exec {
       if ( idx > 1 && idx < node->aspects.size() - 1 ) { // Just arguments of function call
 	if ( (*itr)->elem_type == TE_Type::TOKEN && (*itr)->tk->aspects.size() == 1 &&
 	     (*itr)->tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
-	  std::cout tk_to_string( (*itr)->tk );
-	  }
+	  std::cout << tk_to_string( (*itr)->tk );
 	}
       }
     }

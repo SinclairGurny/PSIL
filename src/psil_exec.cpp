@@ -74,7 +74,7 @@ namespace psil_exec {
   // === Checks type of expression
   VarType check_type( const token_ptr & tk ) {
     if ( tk->aspects.size() == 1 && tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
-      if ( tk->aspects.front()->tk->type_name == "<constant>" ) { // CONSTANT
+      if ( tk->aspects.front()->tk->type_name == "<constant>"  ) { // CONSTANT OR DATUM
 	auto const_type = tk->aspects.front()->tk.get()->aspects.front()->tk.get();
 	if ( const_type->type_name == "<boolean>" ) {
 	  return VarType::BOOL;
@@ -83,7 +83,7 @@ namespace psil_exec {
 	} else if ( const_type->type_name == "<character>" ) {
 	  return VarType::CHAR;
 	} else if ( const_type->type_name == "<list_def>" ) {
-	  return VarType::LIST;
+	  return check_type( const_type->aspects[2]->tk );
 	}
 	return VarType::ERROR;
       } else if ( tk->aspects.front()->tk->type_name == "<variable>" ) { // VARIABLE
@@ -97,6 +97,19 @@ namespace psil_exec {
       } else if ( tk->aspects.front()->tk->type_name == "<application>" ) { // APPLICATION
 	// lazy eval, don't run
 	return VarType::UNKNOWN;
+      } else if ( tk->type_name == "<datum>" ) {
+	auto datum_type = tk->aspects.front()->tk->type_name;
+	if ( datum_type == "<boolean>" ) {
+	  return VarType::BOOL;
+	} else if ( datum_type == "<number>" ) {
+	  return VarType::NUM;
+	} else if ( datum_type == "<character>" ) {
+	  return VarType::CHAR;
+	} else if ( datum_type == "<symbol>" ) {
+	  return VarType::UNKNOWN;
+	} else if ( datum_type == "<list>" ) {
+	  return VarType::LIST;
+	}
       }
     }
     return VarType::UNKNOWN;
@@ -282,7 +295,7 @@ namespace psil_exec {
     tmp = std::make_unique<stack_elem_t>( "ch=", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     // LISTS
-    tmp = std::make_unique<stack_elem_t>( "first!", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "first", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "second", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );

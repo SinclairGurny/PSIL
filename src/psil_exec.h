@@ -226,20 +226,16 @@ namespace psil_exec {
   // Compare the characters given using the operation given
   void psil_char_compare( stack_ptr & s, token_ptr & node );
   // List ===============================================
-  // Return first element of list
-  void psil_first( stack_ptr & s, token_ptr & node );
-  // Return second element of list
-  void psil_second( stack_ptr & s, token_ptr & node );
-  // Return nth element of list
-  void psil_nth( stack_ptr & s, token_ptr & node );
-  // Update the first element of a list
-  void psil_set_first( stack_ptr & s, token_ptr & node );
-  // Update the second element of a list
-  void psil_set_second( stack_ptr & s, token_ptr & node );
+  // Return the pos element of list
+  void psil_get_list( token_ptr & node, size_t pos );
+  // Return the nth element of list
+  void psil_get_nth(  token_ptr & node );
+  // Update the pos element of a list
+  void psil_set_list( token_ptr & node, size_t pos );
   // Update the nth element of a list
-  void psil_set_nth( stack_ptr & s, token_ptr & node );
+  void psil_set_nth( token_ptr & node );
   // Check if the list is null ()
-  void psil_is_null( stack_ptr & s, token_ptr & node );
+  void psil_is_null( token_ptr & node );
   // Quote
   void psil_quote( stack_ptr & s, token_ptr & node );
   void psil_unquote( stack_ptr & s, token_ptr & node );

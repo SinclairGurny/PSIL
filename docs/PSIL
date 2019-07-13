@@ -90,7 +90,7 @@ SEQUENTIAL EVALUATION:
     evaluated each definition or expression in sequence
 
 ASSIGNMENT:
-(set! <variable> <expression>)
+(update <variable> <expression>)
     assign variable to expression, overwriting previous value, does not work on keywords
 
 Standard Procedures: ===============
@@ -104,8 +104,8 @@ LOGICAL:
     returns logical negation of all arguments as boolean
 
 EQUIVALENCE:
-(equal? <a> <b> ...)
-    checks if a and b and ... are of the value
+(equal? <a> <b>)
+    checks if a and b are of the value
 
 NUMBERS:
   ARITHMETIC:
@@ -130,9 +130,9 @@ CHARACTERS:
     same as number operations but performs on characters
 
 LISTS:
-  (first l), (second l), (nth idx l)
+  (first l), (second l), (nth l idx)
     get the corresponding value from a list
-  (first! l val), (second! l val), (nth! l val)
+  (first! l val), (second! l val), (nth! l val idx)
     set the corresponding value from a list
   (null? l)
     check if the list is null (quote ())
