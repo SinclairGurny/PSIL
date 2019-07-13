@@ -11,8 +11,6 @@
 
 namespace psil_exec {
 
-
-
   // Inequalities
   // TODO - write these by taking a lambda comparator
   void psil_lt( stack_ptr & s, token_ptr & node ) {}

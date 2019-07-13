@@ -214,25 +214,25 @@ namespace psil_exec {
   // ================= INPUT / OUTPUT ==========================================================
 
   // converts psil character to char
-  char psil_char( std::string ch ) {
+  std::string psil_char( std::string ch ) {
     if ( ch.size() > 3 ) {
       if ( ch == "#\\newline" ) {
-	return '\n';
+	return "\n";
       } else if ( ch == "#\\space" ) {
-	return ' ';
+	return " ";
       } else if ( ch == "#\\tab" ) {
-	return '\t';
+	return "\t";
       } else if ( ch == "#\\oparen" ) {
-	return '(';
+	return "(";
       } else if ( ch == "#\\cparen" ) {
-	return ')';
+	return ")";
       } else if ( ch == "#\\osqbrac" ) {
-	return '[';
+	return "[";
       } else if ( ch == "#\\csqbrac" ) {
-	return ']';
+	return "]";
       }
     }
-    return ch[2];
+    return ch.substr(2);
   }
 
   // converts char to psil character
@@ -268,9 +268,35 @@ namespace psil_exec {
   }
 
   std::string tk_to_string( token_ptr & tk ) {
-    // if constant
-    //   print
-    // if procedure then PROCEDURE!
+    if ( tk->type_name == "<constant>" || tk->type_name == "<datum>" ) {
+      auto const_type = tk->aspects.front()->tk.get();
+      if ( const_type->type_name == "<boolean>" ) {
+	return const_type->aspects.front()->str;
+      } else if ( const_type->type_name == "<number>" ) {
+	return const_type->aspects.front()->tk->aspects.front()->str;
+      } else if ( const_type->type_name == "<character>" ) {
+	return psil_char( const_type->aspects.front()->str );
+      } else if ( const_type->type_name == "<list_def>" ) {
+	std::string ret = tk_to_string( const_type->aspects[2]->tk );
+	return "'" + ret;
+      } else if ( const_type->type_name == "<list>" ) {
+	std::string ret = "";
+	for ( auto itr = const_type->aspects.begin(); itr != const_type->aspects.end(); ++itr ) {
+	  if ( (*itr)->elem_type == TE_Type::TOKEN ) {
+	    ret += tk_to_string( (*itr)->tk );
+	  }
+	}
+	return "(" + ret + ")";
+      }
+    } else {
+      std::string ret = "";
+      for ( auto itr = tk->aspects.begin(); itr != tk->aspects.end(); ++itr ) {
+	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
+	  ret += tk_to_string( (*itr)->tk );
+	}
+      }
+      return ret;
+    }
     return "";
   }
 
@@ -281,21 +307,7 @@ namespace psil_exec {
       if ( idx > 1 && idx < node->aspects.size() - 1 ) { // Just arguments of function call
 	if ( (*itr)->elem_type == TE_Type::TOKEN && (*itr)->tk->aspects.size() == 1 &&
 	     (*itr)->tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
-	  if ( (*itr)->tk->aspects.front()->tk->type_name == "<constant>" ) {
-	    auto const_type = (*itr)->tk->aspects.front()->tk->aspects.front()->tk.get();
-	    if ( const_type->type_name == "<boolean>" ) {
-	      std::cout << const_type->aspects.front()->str;
-	    } else if ( const_type->type_name == "<number>" ) {
-	      auto num_type = const_type->aspects.front()->tk.get();
-	      auto val = num_type->aspects.front()->str;
-	      std::cout << val;
-	    } else if ( const_type->type_name == "<character>" ) {
-	      std::string ch = const_type->aspects.front()->str;
-	      
-	    } else if ( const_type->type_name == "<list_def>" ) {
-	      std::cerr << "Cannot output lists yet" << std::endl;
-	      // TODO
-	    }
+	  std::cout tk_to_string( (*itr)->tk );
 	  }
 	}
       }
@@ -306,7 +318,6 @@ namespace psil_exec {
 
   // Reads from cin, converts string to list or characters
   void psil_read( token_ptr & node ) {
-    std::cout << "READ" << std::endl;
     std::string str;
     std::cin >> str;
 
@@ -324,7 +335,7 @@ namespace psil_exec {
     
     for ( char c : str ) {
       std::string val;
-
+      val = psil_char( c );
       // Create character datum
       auto tmp_char_top = std::make_unique<psil_parser::token_t>("<datum>");
       auto tmp_char_bot = std::make_unique<psil_parser::token_t>("<character>");

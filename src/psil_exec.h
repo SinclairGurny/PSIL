@@ -149,7 +149,6 @@ namespace psil_exec {
   */
   void exec_app( stack_ptr & s, token_ptr & node, bool& rem );
 
-  
   /**
      Executes the lambda expression given
      Assume the node given is the expression token containing the lambda
@@ -157,9 +156,7 @@ namespace psil_exec {
   */
   void apply_lambda( stack_ptr & s, token_ptr & node, bool& rem );
 
-
   // ==============================================================================
-
 
   /**
      Applies the global functions
@@ -169,6 +166,11 @@ namespace psil_exec {
 
   // ==============================================================================
 
+
+  std::string psil_char( std::string ch );
+  std::string psil_char( char c );
+  std::string tk_to_string( token_ptr & tk );
+  
   // Helper functions to make tokens
   token_ptr make_boolean( std::string val );
   token_ptr make_character( std::string val );
@@ -178,12 +180,12 @@ namespace psil_exec {
   // =============================================================================
   // ===== Global functions ======================================================
 
-  // Input/Output
+  // Input/Output =======================================
   // Print given token to cout
   void print( token_ptr & node, bool newline );
   // cin and return result as character list
   void psil_read( token_ptr & node );
-  // Boolean
+  // Boolean ============================================
   // Logical and of arguments
   void psil_and( stack_ptr & s, token_ptr & node );
   // Logical or of arguments
@@ -192,7 +194,7 @@ namespace psil_exec {
   void psil_not( stack_ptr & s, token_ptr & node );
   // Checks if arguments have the same value
   void psil_is_equal( stack_ptr & s, token_ptr & node );
-  // Math
+  // Math ===============================================
   // Operators
   // Add numbers
   void psil_add( stack_ptr & s, token_ptr & node );
@@ -206,7 +208,7 @@ namespace psil_exec {
   void psil_abs( stack_ptr & s, token_ptr & node );
   // Return arg1 % arg2
   void psil_mod( stack_ptr & s, token_ptr & node );
-  // Approx
+  // Approx ===========================================
   // Round the number down to nearest integer
   void psil_floor( stack_ptr & s, token_ptr & node );
   // Round the number up to nearest integer
@@ -215,7 +217,7 @@ namespace psil_exec {
   void psil_trunc( stack_ptr & s, token_ptr & node );
   // Round the number to the nearest integer
   void psil_round( stack_ptr & s, token_ptr & node );
-  // Inequalities
+  // Inequalities =======================================
   // Compare the numbers given using the operation given
   void psil_num_compare( stack_ptr & s, token_ptr & node );
   // Check if the number is equal to zero
@@ -223,7 +225,7 @@ namespace psil_exec {
   // Character
   // Compare the characters given using the operation given
   void psil_char_compare( stack_ptr & s, token_ptr & node );
-  // List
+  // List ===============================================
   // Return first element of list
   void psil_first( stack_ptr & s, token_ptr & node );
   // Return second element of list
@@ -241,7 +243,7 @@ namespace psil_exec {
   // Quote
   void psil_quote( stack_ptr & s, token_ptr & node );
   void psil_unquote( stack_ptr & s, token_ptr & node );
-  // Identity predicates
+  // Identity predicates ================================
   // Checks if the token is of that type
   void psil_isbool( stack_ptr & s, token_ptr & node );
   void psil_isnum( stack_ptr & s, token_ptr & node );
