@@ -511,9 +511,6 @@ namespace psil_parser {
 	
 #ifdef DEBUG_MODE
 	  std::cerr << "RECURSION" << pn << "->" << next_p->name << std::endl;
-#ifdef DEBUG_SLOW
-	  std::this_thread::sleep_for(std::chrono::milliseconds(DEBUG_DELAY));
-#endif
 #endif
 	  auto new_ret = apply_parser( lang, next_p, input, new_pt, new_match );
 
@@ -698,7 +695,7 @@ namespace psil_parser {
 				    "<boolean> | <number> | <character> | <symbol> | <list>" ) );
       lang->add( gda, new parser_t( "<boolean>", "#t | #f" ) );
       lang->add( gda, new parser_t( "<character>",
-				    "{^(#\\\\).(?!.)} | #\\newline | #\\space"
+				    "{^(#\\\\).(?!.)} | #\\newline | #\\space | #\\tab"
 				    "| #\\oparen | #\\cparen | #\\osqbrac | #\\csqbrac" ) );
       lang->add( gda, new parser_t( "<symbol>", "<identifier>" ) );
       lang->add( gda, new parser_t( "<list>", "() | (<datum>+)" ) );

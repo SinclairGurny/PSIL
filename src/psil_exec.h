@@ -169,6 +169,11 @@ namespace psil_exec {
 
   // ==============================================================================
 
+  // Helper functions to make tokens
+  token_ptr make_boolean( std::string val );
+  token_ptr make_character( std::string val );
+  token_ptr make_integer( std::string val );
+  token_ptr make_decimal( std::string val );
 
   // =============================================================================
   // ===== Global functions ======================================================

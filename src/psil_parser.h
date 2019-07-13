@@ -16,12 +16,6 @@
 #include <vector>
 #include <map>
 
-#ifdef DEBUG_MODE
-#define DEBUG_DELAY 50
-#include <chrono>
-#include <thread>
-#endif
-
 namespace psil_parser {
 
   // ===== Struct forward declarations =====
