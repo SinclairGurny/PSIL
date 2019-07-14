@@ -1,0 +1,8 @@
+(begin
+ (define main (lambda (n)
+		(if (equal? n 10)
+		 (println #\D #\o #\n #\e)
+		 (begin
+		   (println n)
+		   (main (+ n 1))))))
+ (main 0))

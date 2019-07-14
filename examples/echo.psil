@@ -1,0 +1,8 @@
+(begin	(define val #f)
+	(define main (lambda () (begin
+		(update val (read))
+		(println val)
+		(cond (not (equal? val (quote (#\q #\u #\i #\t))))
+		      (main)))))
+	(main))
+	      

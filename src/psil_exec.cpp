@@ -57,14 +57,13 @@ namespace psil_exec {
     if ( is_expr && equal_tk( where->aspects.front()->tk, what ) ) {
       // Found location
       where.reset();
-      where = std::move( that );
+      where = std::move( copy_tk( that ) );
       return true;
     } else {
       // Keep looking
       for ( auto itr = where->aspects.begin(); itr != where->aspects.end(); ++itr ) {
 	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
-	  bool ret = find_replace( (*itr)->tk, what, that );
-	  if ( ret ) return true;
+	  find_replace( (*itr)->tk, what, that );
 	}
       }
     }
@@ -425,6 +424,7 @@ namespace psil_exec {
   
   // === Execute abstract syntax tree
   void exec( stack_ptr & s, token_ptr & ast, bool& rem ) {
+    if ( ast == nullptr ) { return; }
     if ( ast->type_name == "<program>" ) {
       if ( !ast->aspects.empty() && ast->aspects.front()->elem_type == TE_Type::TOKEN ) {
 	exec( s, ast->aspects.front()->tk, rem );
@@ -572,6 +572,9 @@ namespace psil_exec {
       } else if ( ret == stack_t::ExistsType::LOCAL ) {
 	throw std::string( "Cannot redefine a local variable, use set!" );
       } else { // NO - variable is not known
+	bool r = false;
+	exec( s, node->aspects[3]->tk, r);
+	if ( r ) throw std::string( "Update error" );
 	s->add( iden, node->aspects[3]->tk );
       }
     } else if ( node->aspects[1]->str == "update" ) {
@@ -583,6 +586,9 @@ namespace psil_exec {
       if ( ret == stack_t::ExistsType::GLOBAL ) {
 	throw std::string( "Cannot set! a global procedure" );
       } else if ( ret == stack_t::ExistsType::LOCAL ) {
+	bool r = false;
+	exec( s, node->aspects[3]->tk, r);
+	if ( r ) throw std::string( "Update error" );
 	s->update( iden, ret, node->aspects[3]->tk );
       } else { // NO - variable is not known
 	throw std::string( "Cannot set a variable that has not been defined" );
@@ -648,14 +654,15 @@ namespace psil_exec {
 		}
 	      } else { // Locally defined operation
 		bool r = false;
-		exec( s, (*itr)->tk, r );
+		exec_var( s, (*itr)->tk, r );
 		if ( r )
 		  throw std::string( "Missing function in application expression" );
 		//throw std::string( "Error in application: Not a procedure, identifier found" );
 		func_loc = stack_t::ExistsType::LOCAL;
+		exec_app( s, node, rem );
+		return;
 	      }
 	    } else if ( exp_type == "<lambda>" ) {
-	      std::cerr << "Lambda evaluation is not yet implmented" << std::endl;;
 	      func_loc = stack_t::ExistsType::LOCAL;
 	    } else if ( exp_type == "<constant>" ) {
 	      throw std::string( "Cannot apply a constant" );
