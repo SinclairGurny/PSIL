@@ -2,7 +2,7 @@
     psil_exec.h
     PSIL Execution Library
     @author Sinclair Gurny
-    @version 0.5
+    @version 0.9
     July 2019
  */
 
@@ -12,6 +12,8 @@
 #include "psil_eval.h"
 #include <iterator>
 #include <functional>
+#include <fstream>
+#include <cmath>
 
 namespace psil_exec {
 
@@ -25,7 +27,7 @@ namespace psil_exec {
   using token_ptr = std::unique_ptr<psil_parser::token_t>;
   using stack_ptr = std::unique_ptr<stack_t>;
 
-  enum VarType { BOOL, CHAR, NUM, LIST, PROC, UNKNOWN, ERROR };
+  enum VarType { BOOL, CHAR, NUM, LIST, PROC, SYMBOL, UNKNOWN, ERROR };
   
   // ===================================================================================
   // Internal Helper Functions
@@ -107,6 +109,9 @@ namespace psil_exec {
   */
   void repl( const std::unique_ptr<psil_parser::language_t> & lang, std::string input );
 
+  // Perform single read evaluate print cycle for contents of file
+  void run_file( const std::unique_ptr<psil_parser::language_t> & lang, std::string filename );
+
   // ================== Exec functions ================================================
   
   /**
@@ -137,9 +142,7 @@ namespace psil_exec {
   */
   void exec_def( stack_ptr & s, token_ptr & node  );
 
-  /**
-     Replaces variables with their value
-  */
+  //   Replaces variables with their value
   void exec_var( stack_ptr & s, token_ptr & node, bool& rem );
 
     /**
@@ -149,7 +152,6 @@ namespace psil_exec {
   */
   void exec_app( stack_ptr & s, token_ptr & node, bool& rem );
 
-  
   /**
      Executes the lambda expression given
      Assume the node given is the expression token containing the lambda
@@ -157,28 +159,33 @@ namespace psil_exec {
   */
   void apply_lambda( stack_ptr & s, token_ptr & node, bool& rem );
 
-
   // ==============================================================================
-
-
-  /**
-     Applies the global functions
-  */
+  
+  // Applies the global functions 
   void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
   
 
   // ==============================================================================
 
 
+  std::string psil_char( std::string ch );
+  std::string psil_char( char c );
+  std::string tk_to_string( token_ptr & tk );
+  
+  // Helper functions to make tokens
+  token_ptr make_boolean( bool val );
+  token_ptr make_character( std::string val );
+  token_ptr make_number( std::string val, bool int_or_dec );
+
   // =============================================================================
   // ===== Global functions ======================================================
 
-  // Input/Output
+  // Input/Output =======================================
   // Print given token to cout
   void print( token_ptr & node, bool newline );
   // cin and return result as character list
   void psil_read( token_ptr & node );
-  // Boolean
+  // Boolean ============================================
   // Logical and of arguments
   void psil_and( stack_ptr & s, token_ptr & node );
   // Logical or of arguments
@@ -187,7 +194,7 @@ namespace psil_exec {
   void psil_not( stack_ptr & s, token_ptr & node );
   // Checks if arguments have the same value
   void psil_is_equal( stack_ptr & s, token_ptr & node );
-  // Math
+  // Math ===============================================
   // Operators
   // Add numbers
   void psil_add( stack_ptr & s, token_ptr & node );
@@ -197,53 +204,43 @@ namespace psil_exec {
   void psil_mult( stack_ptr & s, token_ptr & node );
   // Divide numbers
   void psil_div( stack_ptr & s, token_ptr & node );
-  // Take absolute value of a number
-  void psil_abs( stack_ptr & s, token_ptr & node );
   // Return arg1 % arg2
-  void psil_mod( stack_ptr & s, token_ptr & node );
-  // Approx
-  // Round the number down to nearest integer
-  void psil_floor( stack_ptr & s, token_ptr & node );
-  // Round the number up to nearest integer
-  void psil_ceil( stack_ptr & s, token_ptr & node );
-  // Truncate the decimal to convert to integer
-  void psil_trunc( stack_ptr & s, token_ptr & node );
-  // Round the number to the nearest integer
-  void psil_round( stack_ptr & s, token_ptr & node );
-  // Inequalities
+  void psil_mod( token_ptr & node );
+  // Approx ===========================================
+  // Performs generic operation on number
+  void psil_round( token_ptr & node, std::function<long double(long double)> op );
+  // Inequalities =======================================
   // Compare the numbers given using the operation given
-  void psil_num_compare( stack_ptr & s, token_ptr & node );
-  // Check if the number is equal to zero
-  void psil_is_zero( stack_ptr & s, token_ptr & node );
+  void psil_num_compare( token_ptr & node, std::function<bool(long double, long double)> comp );
   // Character
   // Compare the characters given using the operation given
-  void psil_char_compare( stack_ptr & s, token_ptr & node );
-  // List
-  // Return first element of list
-  void psil_first( stack_ptr & s, token_ptr & node );
-  // Return second element of list
-  void psil_second( stack_ptr & s, token_ptr & node );
-  // Return nth element of list
-  void psil_nth( stack_ptr & s, token_ptr & node );
-  // Update the first element of a list
-  void psil_set_first( stack_ptr & s, token_ptr & node );
-  // Update the second element of a list
-  void psil_set_second( stack_ptr & s, token_ptr & node );
+  void psil_char_compare( token_ptr & node, std::function<bool(std::string, std::string)> comp );
+  // List ===============================================
+  // Return length of list
+  void psil_length( token_ptr & node );
+  // Return the pos element of list
+  void psil_get_list( token_ptr & node, long pos );
+  // Return the nth element of list
+  void psil_get_nth(  token_ptr & node );
+  // Update the pos element of a list
+  void psil_set_list( token_ptr & node, long pos );
   // Update the nth element of a list
-  void psil_set_nth( stack_ptr & s, token_ptr & node );
+  void psil_set_nth( token_ptr & node );
+  // Append datum to end of list
+  void psil_append( token_ptr & node, long location );
+  // Insert datum to end of list
+  void psil_insert( token_ptr & node );
+  // Remove datum from list
+  void psil_pop( token_ptr & node );
   // Check if the list is null ()
-  void psil_is_null( stack_ptr & s, token_ptr & node );
+  void psil_is_null( token_ptr & node );
   // Quote
   void psil_quote( stack_ptr & s, token_ptr & node );
   void psil_unquote( stack_ptr & s, token_ptr & node );
-  // Identity predicates
+  // Identity predicates ================================
   // Checks if the token is of that type
-  void psil_isbool( stack_ptr & s, token_ptr & node );
-  void psil_isnum( stack_ptr & s, token_ptr & node );
-  void psil_ischar( stack_ptr & s, token_ptr & node );
-  void psil_issymbol( stack_ptr & s, token_ptr & node );
-  void psil_isproc( stack_ptr & s, token_ptr & node );
-  void psil_islist( stack_ptr & s, token_ptr & node );
-  
+  void psil_type_check( token_ptr & node, VarType t );
+  // Checks if token is integer or decimal
+  void psil_num_check( token_ptr & node, bool int_or_dec );  
 }
 

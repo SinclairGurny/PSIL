@@ -2,7 +2,7 @@
     psil_exec.cpp
     PSIL Execution Implementation
     @author Sinclair Gurny
-    @version 0.5
+    @version 0.9
     July 2019
 */
 
@@ -57,14 +57,13 @@ namespace psil_exec {
     if ( is_expr && equal_tk( where->aspects.front()->tk, what ) ) {
       // Found location
       where.reset();
-      where = std::move( that );
+      where = std::move( copy_tk( that ) );
       return true;
     } else {
       // Keep looking
       for ( auto itr = where->aspects.begin(); itr != where->aspects.end(); ++itr ) {
 	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
-	  bool ret = find_replace( (*itr)->tk, what, that );
-	  if ( ret ) return true;
+	  find_replace( (*itr)->tk, what, that );
 	}
       }
     }
@@ -74,7 +73,7 @@ namespace psil_exec {
   // === Checks type of expression
   VarType check_type( const token_ptr & tk ) {
     if ( tk->aspects.size() == 1 && tk->aspects.front()->elem_type == TE_Type::TOKEN ) {
-      if ( tk->aspects.front()->tk->type_name == "<constant>" ) { // CONSTANT
+      if ( tk->aspects.front()->tk->type_name == "<constant>"  ) { // CONSTANT OR DATUM
 	auto const_type = tk->aspects.front()->tk.get()->aspects.front()->tk.get();
 	if ( const_type->type_name == "<boolean>" ) {
 	  return VarType::BOOL;
@@ -83,12 +82,11 @@ namespace psil_exec {
 	} else if ( const_type->type_name == "<character>" ) {
 	  return VarType::CHAR;
 	} else if ( const_type->type_name == "<list_def>" ) {
-	  return VarType::LIST;
+	  return check_type( const_type->aspects[2]->tk );
 	}
 	return VarType::ERROR;
       } else if ( tk->aspects.front()->tk->type_name == "<variable>" ) { // VARIABLE
-	std::cerr << "Cannot look up variables yet" << std::endl;
-	return VarType::UNKNOWN;
+	return VarType::SYMBOL;
       } else if ( tk->aspects.front()->tk->type_name == "<lambda>" ) { // LAMBDA
 	return VarType::PROC;
       } else if ( tk->aspects.front()->tk->type_name == "<conditional>" ) { // CONDITIONAL
@@ -97,6 +95,19 @@ namespace psil_exec {
       } else if ( tk->aspects.front()->tk->type_name == "<application>" ) { // APPLICATION
 	// lazy eval, don't run
 	return VarType::UNKNOWN;
+      } else if ( tk->type_name == "<datum>" ) {
+	auto datum_type = tk->aspects.front()->tk->type_name;
+	if ( datum_type == "<boolean>" ) {
+	  return VarType::BOOL;
+	} else if ( datum_type == "<number>" ) {
+	  return VarType::NUM;
+	} else if ( datum_type == "<character>" ) {
+	  return VarType::CHAR;
+	} else if ( datum_type == "<symbol>" ) {
+	  return VarType::SYMBOL;
+	} else if ( datum_type == "<list>" ) {
+	  return VarType::LIST;
+	}
       }
     }
     return VarType::UNKNOWN;
@@ -257,32 +268,34 @@ namespace psil_exec {
     tmp = std::make_unique<stack_elem_t>( "round", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     //   INEQUALITIES
-    tmp = std::make_unique<stack_elem_t>( "<", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "lt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "<=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "lte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( ">", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "gt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( ">=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "gte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "eq", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     //   MISC
     tmp = std::make_unique<stack_elem_t>( "zero?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     // CHARACTERS
-    tmp = std::make_unique<stack_elem_t>( "ch<", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_lt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch<=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_lte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch>", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_gt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch>=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_gte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_eq", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     // LISTS
-    tmp = std::make_unique<stack_elem_t>( "first!", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "length", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "first", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "second", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
@@ -293,6 +306,12 @@ namespace psil_exec {
     tmp = std::make_unique<stack_elem_t>( "second!", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "nth!", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "append", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "insert", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "pop", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "null?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
@@ -305,13 +324,17 @@ namespace psil_exec {
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "number?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "char?", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "character?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "symbol?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "proc?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "list?", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "integer?", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "decimal?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     // INPUT/OUTPUT
     tmp = std::make_unique<stack_elem_t>( "print", VarType::PROC, nullptr );
@@ -359,11 +382,60 @@ namespace psil_exec {
       std::cerr << "Error while parsing input" << std::endl;
     }
   }
+
+  void run_file( const std::unique_ptr<psil_parser::language_t> & lang, std::string filename ) {
+
+    // Read contents from file
+    std::ifstream code( filename );
+    if ( !code.good() ) {
+      std::cerr << "Could not open file" << std::endl;
+    }
+
+    std::string input;
+    std::string tmp;
+    while ( code >> tmp ) { input += tmp + " "; }
+#ifdef DEBUG_MODE
+    std::cout << input << std::endl;
+#endif
+    
+    auto ast = psil_parser::parse( lang, input );
+    if ( ast ) {
+#ifdef DEBUG_MODE
+      ast->print();
+#endif      
+      // eval
+      try {
+	if ( !psil_eval::check_node( ast.get() ) )
+	std::cerr << "Unknown Error while verifying code!" << std::endl;
+      } catch ( std::string exp ) {
+	std::cerr << "Error while verifying code:: " << exp << std::endl;
+	return;
+      }
+      
+      // exec
+      try {
+	bool rem = false;
+	auto stack = std::make_unique<stack_t>();
+	exec( stack, ast, rem );
+#ifdef DEBUG_MODE
+	if ( !rem ) {
+	  ast->print();
+	}
+#endif	
+      } catch ( std::string exp ) {
+	std::cerr << "Runtime error:: " << exp << std::endl;
+      }
+      
+    } else {
+      std::cerr << "Error while parsing input" << std::endl;
+    }
+  }
   
   // ===================================================================================
   
   // === Execute abstract syntax tree
   void exec( stack_ptr & s, token_ptr & ast, bool& rem ) {
+    if ( ast == nullptr ) { return; }
     if ( ast->type_name == "<program>" ) {
       if ( !ast->aspects.empty() && ast->aspects.front()->elem_type == TE_Type::TOKEN ) {
 	exec( s, ast->aspects.front()->tk, rem );
@@ -511,6 +583,9 @@ namespace psil_exec {
       } else if ( ret == stack_t::ExistsType::LOCAL ) {
 	throw std::string( "Cannot redefine a local variable, use set!" );
       } else { // NO - variable is not known
+	bool r = false;
+	exec( s, node->aspects[3]->tk, r);
+	if ( r ) throw std::string( "Update error" );
 	s->add( iden, node->aspects[3]->tk );
       }
     } else if ( node->aspects[1]->str == "update" ) {
@@ -522,6 +597,9 @@ namespace psil_exec {
       if ( ret == stack_t::ExistsType::GLOBAL ) {
 	throw std::string( "Cannot set! a global procedure" );
       } else if ( ret == stack_t::ExistsType::LOCAL ) {
+	bool r = false;
+	exec( s, node->aspects[3]->tk, r);
+	if ( r ) throw std::string( "Update error" );
 	s->update( iden, ret, node->aspects[3]->tk );
       } else { // NO - variable is not known
 	throw std::string( "Cannot set a variable that has not been defined" );
@@ -587,14 +665,15 @@ namespace psil_exec {
 		}
 	      } else { // Locally defined operation
 		bool r = false;
-		exec( s, (*itr)->tk, r );
+		exec_var( s, (*itr)->tk, r );
 		if ( r )
 		  throw std::string( "Missing function in application expression" );
 		//throw std::string( "Error in application: Not a procedure, identifier found" );
 		func_loc = stack_t::ExistsType::LOCAL;
+		exec_app( s, node, rem );
+		return;
 	      }
 	    } else if ( exp_type == "<lambda>" ) {
-	      std::cerr << "Lambda evaluation is not yet implmented" << std::endl;;
 	      func_loc = stack_t::ExistsType::LOCAL;
 	    } else if ( exp_type == "<constant>" ) {
 	      throw std::string( "Cannot apply a constant" );

@@ -1,0 +1,94 @@
+(begin
+  (println #\A #\d #\d)
+  (print 3 #\space #\= #\= #\space) (print (+ 1 2))
+  (print #\=) (print (+ 1.0 2.0))
+  (print #\=) (println (+ 1 2.0))
+  
+  (print 0 #\space #\= #\= #\space) (print (+ 0 0))
+  (print #\=) (print (+ 0.0 0.0))
+  (print #\=) (println (+ 0 0.0))
+  
+  (print 55 #\space #\= #\= #\space) (print (+ 0 1 2 3 4 5 6 7 8 9 10.0))
+  (print #\=) (print (+ 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0))
+  (print #\=) (println (+ 0 1 2 3 4 5 6.0 7 8 9 10))
+  
+  (print -6 #\space #\= #\= #\space) (print (+ -1 -5))
+  (print #\=) (print (+ -1.0 -5.0))
+  (print #\=) (println (+ -1 -5))
+  
+  (print 0 #\space #\= #\= #\space) (print (+ 1 -1 1 -1 1 -1))
+  (print #\=) (print (+ 1.0 -1.0 1.0 -1.0 1.0 -1.0))
+  (print #\=) (println (+ 1 -1.0 1 -1 1 -1))
+  
+  (print 12 #\space #\= #\= #\space) (print (+ (+ 1 1) (+ 2 2) (+ 3 3)))
+  (print #\=) (print (+ (+ 1.0 1.0) (+ 2.0 2.0) (+ 3.0 3.0)))
+  (print #\=) (println (+ (+ 1 1.0) (+ 2.0 2) (+ 3 3)))
+
+  (println #\S #\u #\b)
+  (print -1 #\space #\= #\= #\space) (print (- 1 2))
+  (print #\=) (print (- 1.0 2.0))
+  (print #\=) (println (- 1.0 2))
+  
+  (print 0 #\space #\= #\= #\space) (print (- 0 0))
+  (print #\=) (print (- 0.0 0.0))
+  (print #\=) (println (- 0 0.0))
+  
+  (print 0 #\space #\= #\= #\space) (print (- 10 1 2 3 4))
+  (print #\=) (print (- 10.0 1.0 2.0 3.0 4.0))
+  (print #\=) (println (- 10 1 2.0 3 4))
+  
+  (print 4 #\space #\= #\= #\space) (print (- -1 -5))
+  (print #\=) (print (- -1.0 -5.0))
+  (print #\=) (println (- -1 -5.0))
+  
+  (print 2 #\space #\= #\= #\space) (print (- 1 -1 1 -1 1 -1))
+  (print #\=) (print (- 1.0 -1.0 1.0 -1.0 1.0 -1.0))
+  (print #\=) (println (- 1 -1 1 -1 1.0 -1))
+  
+  (print 0 #\space #\= #\= #\space) (print (- (- 1 1) (- 2 2) (- 3 3)))
+  (print #\=) (print (- (- 1.0 1.0) (- 2.0 2.0) (- 3.0 3.0)))
+  (print #\=) (println (- (- 1 1) (- 2 2.0) (- 3 3)))
+
+  (println #\M #\u #\l)
+  (print 2 #\space #\= #\= #\space) (print (* 1 2))
+  (print #\=) (print (* 1.0 2.0))
+  (print #\=) (println (* 1 2.0))
+  
+  (print 0 #\space #\= #\= #\space) (print (* 0 0))
+  (print #\=) (print (* 0.0 0.0))
+  (print #\=) (println (* 0 0.0))
+  
+  (print 8000 #\space #\= #\= #\space) (print (* 10 10 10 2 2 2))
+  (print #\=) (print (* 10.0 10.0 10.0 2.0 2.0 2.0))
+  (print #\=) (println (* 10 10.0 10 2 2 2))
+  
+  (print 5 #\space #\= #\= #\space) (print (* -1 -5))
+  (print #\=) (print (* -1.0 -5.0))
+  (print #\=) (println (* -1 -5.0))
+  
+  (print 1 #\space #\= #\= #\space) (print (* 1 -1 1 -1 1 -1))
+  (print #\=) (print (* 1.0 -1.0 1.0 -1.0 1.0 -1.0))
+  (print #\=) (println (* 1 -1 1 -1.0 1 -1))
+  
+  (print 36 #\space #\= #\= #\space) (print (* (* 1 1) (* 2 2) (* 3 3)))
+  (print #\=) (print (* (* 1.0 1.0) (* 2.0 2.0) (* 3.0 3.0)))
+  (print #\=) (println (* (* 1 1) (* 2.0 2) (* 3 3)))
+
+  (println #\D #\i #\v)
+  (print 5 #\space #\= #\= #\space) (print (/ 10.0 2))
+  (print #\=) (println (/ 10.0 2))
+  
+  (print 1 #\space #\= #\= #\space) (print (/ 1 1))
+  (print #\=) (println (/ 1 1.0))
+  
+  (print 0.0625 #\space #\= #\= #\space) (print (/ 10 2 2 2 2))
+  (print #\=) (println (/ 10 2.0 2 2 2))
+  
+  (print 0.2 #\space #\= #\= #\space) (print (/ -1 -5))
+  (print #\=) (println (/ -1 -5.0))
+  
+  (print -1 #\space #\= #\= #\space) (print (/ 1 -1 1 -1 1 -1))
+  (print #\=) (println (/ 1 -1 1.0 -1 1 -1))
+  
+  (print 1 #\space #\= #\= #\space) (print (/ (/ 1 1) (/ 2 2) (/ 3 3)))
+  (print #\=) (println (/ (/ 1 1.0) (/ 2 2) (/ 3 3))))

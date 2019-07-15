@@ -2,7 +2,7 @@
    psil_parser.h
    PSIL Parser library 
    @author Sinclair Gurny
-   @version 0.5
+   @version 0.9
    July 2019
 */
 
@@ -15,12 +15,6 @@
 #include <regex>
 #include <vector>
 #include <map>
-
-#ifdef DEBUG_MODE
-#define DEBUG_DELAY 50
-#include <chrono>
-#include <thread>
-#endif
 
 namespace psil_parser {
 

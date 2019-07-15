@@ -1,0 +1,9 @@
+(begin
+  (define fact (lambda (n)
+		 (if (equal? n 1)
+		     1
+		     (* n (fact (- n 1))))))
+  (println (fact 4))
+  (println (fact 6))
+  (println (fact 10))
+  (println (fact 20)))

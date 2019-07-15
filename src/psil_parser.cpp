@@ -2,7 +2,7 @@
     psil_parser.cpp
     PSIL Parser implementation
     @author Sinclair Gurny
-    @version 0.5
+    @version 0.9
     July 2019
  */
 
@@ -511,9 +511,6 @@ namespace psil_parser {
 	
 #ifdef DEBUG_MODE
 	  std::cerr << "RECURSION" << pn << "->" << next_p->name << std::endl;
-#ifdef DEBUG_SLOW
-	  std::this_thread::sleep_for(std::chrono::milliseconds(DEBUG_DELAY));
-#endif
 #endif
 	  auto new_ret = apply_parser( lang, next_p, input, new_pt, new_match );
 
@@ -684,12 +681,12 @@ namespace psil_parser {
 				   "| {^[a-zA-Z_][a-zA-Z_0-9\\!]+(?!.)}" ) );
       lang->add( gi, new parser_t( "<operator>", "+ | - | * | /" ) );
       lang->add( gi, new parser_t( "<keyword>",
-				   "define | update | lambda | if | cond | begin"
+				   "define | update | lambda | if | cond | begin | length"
 				   "| and | or | not | equal? | floor | ceil | trunc | round"
 				   "| zero? | first | second | nth | first! | second! | nth!"
-				   "| null? | ch_lt | ch_lte | ch_gt | ch_gte | ch_eq"
-				   "| lt | lte | gt | gte | eq"
-				   "| boolean? | number? | char? | symbol? | proc? | list?"
+				   "| null? | ch_lt | ch_lte | ch_gt | ch_gte | ch_eq | decimal?"
+				   "| lt | lte | gt | gte | eq | append | insert | pop | integer?"
+				   "| boolean? | number? | character? | symbol? | proc? | list?"
 				   "| abs | mod | print | println | read | quote | unquote" ) );
     
       group_t * gda = lang->add( new group_t( "DATA" ) );
@@ -698,7 +695,7 @@ namespace psil_parser {
 				    "<boolean> | <number> | <character> | <symbol> | <list>" ) );
       lang->add( gda, new parser_t( "<boolean>", "#t | #f" ) );
       lang->add( gda, new parser_t( "<character>",
-				    "{^(#\\\\).(?!.)} | #\\newline | #\\space"
+				    "{^(#\\\\).(?!.)} | #\\newline | #\\space | #\\tab"
 				    "| #\\oparen | #\\cparen | #\\osqbrac | #\\csqbrac" ) );
       lang->add( gda, new parser_t( "<symbol>", "<identifier>" ) );
       lang->add( gda, new parser_t( "<list>", "() | (<datum>+)" ) );

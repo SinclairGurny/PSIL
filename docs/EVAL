@@ -1,0 +1,13 @@
+==============================================================================================
+=== Code Evaluation Library Details ==========================================================
+==============================================================================================
+
+The Eval library analyzes the code for obvious errors in the code without actually executing
+the abstract syntax tree.
+
+Lambda expressions:
+  Checks for arguments that match globally defined procedure names
+
+Definitions:
+  Checks for defining or updating globally defined procedure names
+
