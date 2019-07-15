@@ -175,10 +175,9 @@ namespace psil_exec {
   std::string tk_to_string( token_ptr & tk );
   
   // Helper functions to make tokens
-  token_ptr make_boolean( std::string val );
+  token_ptr make_boolean( bool val );
   token_ptr make_character( std::string val );
-  token_ptr make_integer( std::string val );
-  token_ptr make_decimal( std::string val );
+  token_ptr make_number( std::string val, bool int_or_dec );
 
   // =============================================================================
   // ===== Global functions ======================================================
@@ -222,21 +221,29 @@ namespace psil_exec {
   void psil_round( stack_ptr & s, token_ptr & node );
   // Inequalities =======================================
   // Compare the numbers given using the operation given
-  void psil_num_compare( stack_ptr & s, token_ptr & node );
+  void psil_num_compare( token_ptr & node, std::function<bool(long double, long double)> comp );
   // Check if the number is equal to zero
   void psil_is_zero( stack_ptr & s, token_ptr & node );
   // Character
   // Compare the characters given using the operation given
-  void psil_char_compare( stack_ptr & s, token_ptr & node );
+  void psil_char_compare( token_ptr & node, std::function<bool(std::string, std::string)> comp );
   // List ===============================================
+  // Return length of list
+  void psil_length( token_ptr & node );
   // Return the pos element of list
-  void psil_get_list( token_ptr & node, size_t pos );
+  void psil_get_list( token_ptr & node, long pos );
   // Return the nth element of list
   void psil_get_nth(  token_ptr & node );
   // Update the pos element of a list
-  void psil_set_list( token_ptr & node, size_t pos );
+  void psil_set_list( token_ptr & node, long pos );
   // Update the nth element of a list
   void psil_set_nth( token_ptr & node );
+  // Append datum to end of list
+  void psil_append( token_ptr & node, long location );
+  // Insert datum to end of list
+  void psil_insert( token_ptr & node );
+  // Remove datum from list
+  void psil_pop( token_ptr & node );
   // Check if the list is null ()
   void psil_is_null( token_ptr & node );
   // Quote

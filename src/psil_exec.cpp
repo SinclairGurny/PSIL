@@ -269,31 +269,33 @@ namespace psil_exec {
     tmp = std::make_unique<stack_elem_t>( "round", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     //   INEQUALITIES
-    tmp = std::make_unique<stack_elem_t>( "<", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "lt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "<=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "lte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( ">", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "gt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( ">=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "gte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "eq", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     //   MISC
     tmp = std::make_unique<stack_elem_t>( "zero?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     // CHARACTERS
-    tmp = std::make_unique<stack_elem_t>( "ch<", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_lt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch<=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_lte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch>", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_gt", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch>=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_gte", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "ch=", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "ch_eq", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     // LISTS
+    tmp = std::make_unique<stack_elem_t>( "length", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "first", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "second", VarType::PROC, nullptr );
@@ -305,6 +307,12 @@ namespace psil_exec {
     tmp = std::make_unique<stack_elem_t>( "second!", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "nth!", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "append", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "insert", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "pop", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "null?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );

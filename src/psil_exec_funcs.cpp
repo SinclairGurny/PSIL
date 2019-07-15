@@ -14,7 +14,7 @@ namespace psil_exec {
   // Take function name and apply correct function
   void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun ) {
     size_t arg_count = node->aspects.front()->tk->aspects.size()-3;
-    // Input / Output ====================================================================
+    // ==============================  Input / Output ===================================
     if ( fun == "print" ) {
       if ( arg_count < 1 )
 	throw std::string( "print: Wrong number of arguments given, 1+ expected" );
@@ -35,7 +35,7 @@ namespace psil_exec {
       rem = true;
       std::cout << std::endl;
     }
-    // Boolean operations  ================================================================
+    // ========================= Boolean operations  ================================
     else if ( fun == "and" ) {
       if ( arg_count < 2 )
 	throw std::string( "and: Wrong number of arguments given, 2+ expected" );
@@ -53,7 +53,7 @@ namespace psil_exec {
 	throw std::string( "equal?: Wrong number of arguments given, 2 expected" );
       psil_is_equal( s, node );
     }
-    // Arithmetic  ====================================================================
+    // ========================= Arithmetic  =======================================
     else if ( fun == "+" ) {
       if ( arg_count < 1 )
 	throw std::string( "+: Wrong number of arguments given, 1+ expected" );
@@ -71,7 +71,7 @@ namespace psil_exec {
 	throw std::string( "/: Wrong number of arguments given, 1+ expected" );
       psil_div( s, node );
     }
-    // Approx  ===========================================================================
+    // ============================ Approx  ======================================
     else if ( fun == "abs" ) {
       if ( arg_count != 1 )
 	throw std::string( "abs: Wrong number of arguments given, 1 expected" );
@@ -97,56 +97,71 @@ namespace psil_exec {
 	throw std::string( "round: Wrong number of arguments given, 1 expected" );
 
     }
-    // Inequalities  ====================================================================
+    // ========================== Inequalities  ================================
     else if ( fun == "lt" ) {
       if ( arg_count != 2 )
 	throw std::string( "lt: Wrong number of arguments given, 1+ expected" );
-
+      auto comp = [](long double a, long double b) -> bool { return a < b; };
+      psil_num_compare( node, comp );
     } else if ( fun == "lte" ) {
       if ( arg_count != 2 )
 	throw std::string( "lte: Wrong number of arguments given, 1+ expected" );
-
+      auto comp = [](long double a, long double b) -> bool { return a <= b; };
+      psil_num_compare( node, comp );
     } else if ( fun == "gt" ) {
       if ( arg_count != 2 )
 	throw std::string( "gt: Wrong number of arguments given, 1+ expected" );
-
+      auto comp = [](long double a, long double b) -> bool { return a > b; };
+      psil_num_compare( node, comp );
     } else if ( fun == "gte" ) {
       if ( arg_count != 2 )
 	throw std::string( "gte: Wrong number of arguments given, 1+ expected" );
-
+      auto comp = [](long double a, long double b) -> bool { return a >= b; };
+      psil_num_compare( node, comp );
     } else if ( fun == "eq" ) {
       if ( arg_count != 2 )
 	throw std::string( "eq: Wrong number of arguments given, 1+ expected" );
-
+      auto comp = [](long double a, long double b) -> bool {
+		    return (a-b) < 0.0000000001 && (a-b) > -0.0000000001;  };
+      psil_num_compare( node, comp );
     } else if ( fun == "zero?" ) {
       if ( arg_count != 2 )
 	throw std::string( "zero?: Wrong number of arguments given, 1+ expected" );
 
     }
-    // Character  ====================================================================
-    else if ( fun == "chlt" ) {
+    // ========================== Character  ===================================
+    else if ( fun == "ch_lt" ) {
       if ( arg_count != 2 )
-	throw std::string( "chlt: Wrong number of arguments given, 1+ expected" );
-
-    } else if ( fun == "chlte" ) {
+	throw std::string( "ch_lt: Wrong number of arguments given, 2 expected" );
+      auto comp = [](std::string a, std::string b) -> bool { return a < b; };
+      psil_char_compare( node, comp );
+    } else if ( fun == "ch_lte" ) {
       if ( arg_count != 2 )
-	throw std::string( "chlte: Wrong number of arguments given, 1+ expected" );
-
-    } else if ( fun == "chgt" ) {
+	throw std::string( "ch_lte: Wrong number of arguments given, 2 expected" );
+      auto comp = [](std::string a, std::string b) -> bool { return a <= b; };
+      psil_char_compare( node, comp );
+    } else if ( fun == "ch_gt" ) {
       if ( arg_count != 2 )
-	throw std::string( "chgt: Wrong number of arguments given, 1+ expected" );
-
-    } else if ( fun == "chgte" ) {
+	throw std::string( "ch_gt: Wrong number of arguments given, 2 expected" );
+      auto comp = [](std::string a, std::string b) -> bool { return a > b; };
+      psil_char_compare( node, comp );
+    } else if ( fun == "ch_gte" ) {
       if ( arg_count != 2 )
-	throw std::string( "chgte: Wrong number of arguments given, 1+ expected" );
-
-    } else if ( fun == "cheq" ) {
+	throw std::string( "ch_gte: Wrong number of arguments given, 2 expected" );
+      auto comp = [](std::string a, std::string b) -> bool { return a >= b; };
+      psil_char_compare( node, comp );
+    } else if ( fun == "ch_eq" ) {
       if ( arg_count != 2 )
-	throw std::string( "cheq: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "ch_eq: Wrong number of arguments given, 2 expected" );
+      auto comp = [](std::string a, std::string b) -> bool { return a == b; };
+      psil_char_compare( node, comp );
     }
-    // List  ==========================================================================
-    else if ( fun == "first" ) {
+    // =========================== List  ========================================
+    else if ( fun == "length" ) {
+      if ( arg_count != 1 )
+	throw std::string( "length: Wront number of arguments given, 1 expected" );
+      psil_length( node );
+    } else if ( fun == "first" ) {
       if ( arg_count != 1 )
 	throw std::string( "first: Wrong number of arguments given, 1 expected" );
       psil_get_list( node, 0 );
@@ -169,11 +184,23 @@ namespace psil_exec {
     } else if ( fun == "nth!" ) {
       if ( arg_count != 3 )
 	throw std::string( "nth: Wrong number of arguments given, 3 expected" );
-      
+      psil_set_nth( node );
+    } else if ( fun == "append" ) {
+      if ( arg_count != 2 )
+	throw std::string( "append: Wrong number of arguments given, 2 expected" );
+      psil_append( node, -1 );
+    } else if ( fun == "insert" ) {
+      if ( arg_count != 3 )
+	throw std::string( "insert: Wrong number of arguments given, 3 expected" );
+      psil_insert( node );
+    } else if ( fun == "pop" ) {
+      if ( arg_count != 2 )
+	throw std::string( "pop: Wrong number of arguments given, 2 expected" );
+      psil_pop( node );
     } else if ( fun == "null?" ) {
       if ( arg_count != 1 )
 	throw std::string( "null?: Wrong number of arguments given, 1 expected" );
-
+      psil_is_null( node );
     } else if ( fun == "quote" ) {
       if ( arg_count != 1 )
 	throw std::string( "quote: Wrong number of arguments given, 1 expected" );
@@ -183,7 +210,7 @@ namespace psil_exec {
 	throw std::string( "unquote: Wrong number of arguments given, 1 expected" );
 
     }
-    // Identity  ====================================================================
+    // ======================= Identity  =========================================
     else if ( fun == "bool?" ) {
       if ( arg_count != 1 )
 	throw std::string( "bool?: Wrong number of arguments given, 1+ expected" );

@@ -134,6 +134,10 @@ LISTS:
     get the corresponding value from a list
   (first! l val), (second! l val), (nth! l val idx)
     set the corresponding value from a list
+  (append l val), (insert l val idx)
+    add the value to the corresponding place in a list
+  (pop l idx)
+    remove the corresponding place in a list
   (null? l)
     check if the list is null (quote ())
   (quote x)

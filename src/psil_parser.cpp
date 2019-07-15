@@ -681,11 +681,11 @@ namespace psil_parser {
 				   "| {^[a-zA-Z_][a-zA-Z_0-9\\!]+(?!.)}" ) );
       lang->add( gi, new parser_t( "<operator>", "+ | - | * | /" ) );
       lang->add( gi, new parser_t( "<keyword>",
-				   "define | update | lambda | if | cond | begin"
+				   "define | update | lambda | if | cond | begin | length"
 				   "| and | or | not | equal? | floor | ceil | trunc | round"
 				   "| zero? | first | second | nth | first! | second! | nth!"
 				   "| null? | ch_lt | ch_lte | ch_gt | ch_gte | ch_eq"
-				   "| lt | lte | gt | gte | eq"
+				   "| lt | lte | gt | gte | eq | append | insert | pop"
 				   "| boolean? | number? | char? | symbol? | proc? | list?"
 				   "| abs | mod | print | println | read | quote | unquote" ) );
     
