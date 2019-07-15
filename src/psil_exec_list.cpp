@@ -3,7 +3,7 @@
    PSIL Execution Library
    Global list function implementations
    @author Sinclair Gurny
-   @version 0.5
+   @version 0.9
    July 2019
 */
 

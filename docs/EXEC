@@ -1,0 +1,10 @@
+==============================================================================================
+=== Code Execution Library Details ===========================================================
+==============================================================================================
+
+The library is split into many different sections.
+
+The general abstract syntax tree execution code is implemented in psil_exec.cpp
+The other exec files are used to split up the related global procedure implementations.
+
+...

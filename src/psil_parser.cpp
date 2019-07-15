@@ -2,7 +2,7 @@
     psil_parser.cpp
     PSIL Parser implementation
     @author Sinclair Gurny
-    @version 0.5
+    @version 0.9
     July 2019
  */
 
@@ -684,9 +684,9 @@ namespace psil_parser {
 				   "define | update | lambda | if | cond | begin | length"
 				   "| and | or | not | equal? | floor | ceil | trunc | round"
 				   "| zero? | first | second | nth | first! | second! | nth!"
-				   "| null? | ch_lt | ch_lte | ch_gt | ch_gte | ch_eq"
-				   "| lt | lte | gt | gte | eq | append | insert | pop"
-				   "| boolean? | number? | char? | symbol? | proc? | list?"
+				   "| null? | ch_lt | ch_lte | ch_gt | ch_gte | ch_eq | decimal?"
+				   "| lt | lte | gt | gte | eq | append | insert | pop | integer?"
+				   "| boolean? | number? | character? | symbol? | proc? | list?"
 				   "| abs | mod | print | println | read | quote | unquote" ) );
     
       group_t * gda = lang->add( new group_t( "DATA" ) );

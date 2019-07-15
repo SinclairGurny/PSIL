@@ -2,7 +2,7 @@
    psil_exec_funcs.cpp
    PSIL Execution Library Global function implementations
    @author Sinclair Gurny
-   @version 0.5
+   @version 0.9
    July 2019
 */
 
@@ -75,27 +75,27 @@ namespace psil_exec {
     else if ( fun == "abs" ) {
       if ( arg_count != 1 )
 	throw std::string( "abs: Wrong number of arguments given, 1 expected" );
-
+      auto comp = [](long double a) -> long double { return abs(a); };
+      psil_round( node, comp );
     } else if ( fun == "mod" ) {
       if ( arg_count != 2 )
 	throw std::string( "mod: Wrong number of arguments given, 2 expected" );
-
+      psil_mod( node );
     } else if ( fun == "floor" ) {
       if ( arg_count != 1 )
 	throw std::string( "floor: Wrong number of arguments given, 1 expected" );
-
+      auto comp = [](long double a) -> long double { return floor(a); };
+      psil_round( node, comp );
     } else if ( fun == "ceil" ) {
       if ( arg_count != 1 )
 	throw std::string( "ceil: Wrong number of arguments given, 1 expected" );
-
-    } else if ( fun == "trunc" ) {
-      if ( arg_count != 1 )
-	throw std::string( "trunc: Wrong number of arguments given, 1 expected" );
-
+      auto comp = [](long double a) -> long double { return ceil(a); };
+      psil_round( node, comp );
     } else if ( fun == "round" ) {
       if ( arg_count != 1 )
 	throw std::string( "round: Wrong number of arguments given, 1 expected" );
-
+      auto comp = [](long double a) -> long double { return round(a); };
+      psil_round( node, comp );
     }
     // ========================== Inequalities  ================================
     else if ( fun == "lt" ) {
@@ -124,10 +124,6 @@ namespace psil_exec {
       auto comp = [](long double a, long double b) -> bool {
 		    return (a-b) < 0.0000000001 && (a-b) > -0.0000000001;  };
       psil_num_compare( node, comp );
-    } else if ( fun == "zero?" ) {
-      if ( arg_count != 2 )
-	throw std::string( "zero?: Wrong number of arguments given, 1+ expected" );
-
     }
     // ========================== Character  ===================================
     else if ( fun == "ch_lt" ) {
@@ -204,38 +200,47 @@ namespace psil_exec {
     } else if ( fun == "quote" ) {
       if ( arg_count != 1 )
 	throw std::string( "quote: Wrong number of arguments given, 1 expected" );
-
+      // TODO
     } else if ( fun == "unquote" ) {
       if ( arg_count != 1 )
 	throw std::string( "unquote: Wrong number of arguments given, 1 expected" );
-
+      // TODO
     }
     // ======================= Identity  =========================================
-    else if ( fun == "bool?" ) {
+    else if ( fun == "boolean?" ) {
       if ( arg_count != 1 )
-	throw std::string( "bool?: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "bool?: Wrong number of arguments given, 1 expected" );
+      psil_type_check( node, VarType::BOOL );
     } else if ( fun == "number?" ) {
       if ( arg_count != 1 )
-	throw std::string( "number?: Wrong number of arguments given, 1+ expected" );
-
-    } else if ( fun == "char?" ) {
+	throw std::string( "number?: Wrong number of arguments given, 1 expected" );
+      psil_type_check( node, VarType::NUM );
+    } else if ( fun == "character?" ) {
       if ( arg_count != 1 )
-	throw std::string( "char: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "char: Wrong number of arguments given, 1 expected" );
+      psil_type_check( node, VarType::CHAR );
     } else if ( fun == "symbol?" ) {
       if ( arg_count != 1 )
-	throw std::string( "println: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "symbol?: Wrong number of arguments given, 1 expected" );
+      psil_type_check( node, VarType::SYMBOL );
     } else if ( fun == "proc?" ) {
       if ( arg_count != 1 )
-	throw std::string( "println: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "proc?: Wrong number of arguments given, 1 expected" );
+      psil_type_check( node, VarType::PROC );
     } else if ( fun == "list?" ) {
       if ( arg_count != 1 )
-	throw std::string( "println: Wrong number of arguments given, 1+ expected" );
-
+	throw std::string( "list?: Wrong number of arguments given, 1 expected" );
+      psil_type_check( node, VarType::LIST );
+    } else if ( fun == "integer?" ) {
+      if ( arg_count != 1 )
+	throw std::string( "integer?: Wrong number of arguments given, 1 expected" );
+      psil_num_check( node, true );
+    } else if ( fun == "decimal?" ) {
+      if ( arg_count != 1 )
+	throw std::string( "decimal?: Wrong number of arguments given, 1 expected" );
+      psil_num_check( node, false );
     }
+      
   }
 
   // ================= INPUT / OUTPUT ==========================================================

@@ -2,7 +2,7 @@
     psil_exec.cpp
     PSIL Execution Implementation
     @author Sinclair Gurny
-    @version 0.5
+    @version 0.9
     July 2019
 */
 
@@ -86,8 +86,7 @@ namespace psil_exec {
 	}
 	return VarType::ERROR;
       } else if ( tk->aspects.front()->tk->type_name == "<variable>" ) { // VARIABLE
-	std::cerr << "Cannot look up variables yet" << std::endl;
-	return VarType::UNKNOWN;
+	return VarType::SYMBOL;
       } else if ( tk->aspects.front()->tk->type_name == "<lambda>" ) { // LAMBDA
 	return VarType::PROC;
       } else if ( tk->aspects.front()->tk->type_name == "<conditional>" ) { // CONDITIONAL
@@ -105,7 +104,7 @@ namespace psil_exec {
 	} else if ( datum_type == "<character>" ) {
 	  return VarType::CHAR;
 	} else if ( datum_type == "<symbol>" ) {
-	  return VarType::UNKNOWN;
+	  return VarType::SYMBOL;
 	} else if ( datum_type == "<list>" ) {
 	  return VarType::LIST;
 	}
@@ -325,13 +324,17 @@ namespace psil_exec {
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "number?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "char?", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "character?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "symbol?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "proc?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "list?", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "integer?", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "decimal?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     // INPUT/OUTPUT
     tmp = std::make_unique<stack_elem_t>( "print", VarType::PROC, nullptr );

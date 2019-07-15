@@ -2,7 +2,7 @@
     psil_exec.h
     PSIL Execution Library
     @author Sinclair Gurny
-    @version 0.5
+    @version 0.9
     July 2019
  */
 
@@ -13,6 +13,7 @@
 #include <iterator>
 #include <functional>
 #include <fstream>
+#include <cmath>
 
 namespace psil_exec {
 
@@ -26,7 +27,7 @@ namespace psil_exec {
   using token_ptr = std::unique_ptr<psil_parser::token_t>;
   using stack_ptr = std::unique_ptr<stack_t>;
 
-  enum VarType { BOOL, CHAR, NUM, LIST, PROC, UNKNOWN, ERROR };
+  enum VarType { BOOL, CHAR, NUM, LIST, PROC, SYMBOL, UNKNOWN, ERROR };
   
   // ===================================================================================
   // Internal Helper Functions
@@ -108,6 +109,7 @@ namespace psil_exec {
   */
   void repl( const std::unique_ptr<psil_parser::language_t> & lang, std::string input );
 
+  // Perform single read evaluate print cycle for contents of file
   void run_file( const std::unique_ptr<psil_parser::language_t> & lang, std::string filename );
 
   // ================== Exec functions ================================================
@@ -140,9 +142,7 @@ namespace psil_exec {
   */
   void exec_def( stack_ptr & s, token_ptr & node  );
 
-  /**
-     Replaces variables with their value
-  */
+  //   Replaces variables with their value
   void exec_var( stack_ptr & s, token_ptr & node, bool& rem );
 
     /**
@@ -160,10 +160,8 @@ namespace psil_exec {
   void apply_lambda( stack_ptr & s, token_ptr & node, bool& rem );
 
   // ==============================================================================
-
-  /**
-     Applies the global functions
-  */
+  
+  // Applies the global functions 
   void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
   
 
@@ -206,24 +204,14 @@ namespace psil_exec {
   void psil_mult( stack_ptr & s, token_ptr & node );
   // Divide numbers
   void psil_div( stack_ptr & s, token_ptr & node );
-  // Take absolute value of a number
-  void psil_abs( stack_ptr & s, token_ptr & node );
   // Return arg1 % arg2
-  void psil_mod( stack_ptr & s, token_ptr & node );
+  void psil_mod( token_ptr & node );
   // Approx ===========================================
-  // Round the number down to nearest integer
-  void psil_floor( stack_ptr & s, token_ptr & node );
-  // Round the number up to nearest integer
-  void psil_ceil( stack_ptr & s, token_ptr & node );
-  // Truncate the decimal to convert to integer
-  void psil_trunc( stack_ptr & s, token_ptr & node );
-  // Round the number to the nearest integer
-  void psil_round( stack_ptr & s, token_ptr & node );
+  // Performs generic operation on number
+  void psil_round( token_ptr & node, std::function<long double(long double)> op );
   // Inequalities =======================================
   // Compare the numbers given using the operation given
   void psil_num_compare( token_ptr & node, std::function<bool(long double, long double)> comp );
-  // Check if the number is equal to zero
-  void psil_is_zero( stack_ptr & s, token_ptr & node );
   // Character
   // Compare the characters given using the operation given
   void psil_char_compare( token_ptr & node, std::function<bool(std::string, std::string)> comp );
@@ -251,12 +239,8 @@ namespace psil_exec {
   void psil_unquote( stack_ptr & s, token_ptr & node );
   // Identity predicates ================================
   // Checks if the token is of that type
-  void psil_isbool( stack_ptr & s, token_ptr & node );
-  void psil_isnum( stack_ptr & s, token_ptr & node );
-  void psil_ischar( stack_ptr & s, token_ptr & node );
-  void psil_issymbol( stack_ptr & s, token_ptr & node );
-  void psil_isproc( stack_ptr & s, token_ptr & node );
-  void psil_islist( stack_ptr & s, token_ptr & node );
-  
+  void psil_type_check( token_ptr & node, VarType t );
+  // Checks if token is integer or decimal
+  void psil_num_check( token_ptr & node, bool int_or_dec );  
 }
 

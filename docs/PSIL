@@ -57,9 +57,9 @@ NUMBERS:
 
 Primitive Types: ====================
 
-boolean - represents true or false; #f and zero is false, everything else is true
+boolean - represents true or false (#t or #f); #f and zero is false, everything else is true
 
-character - represents a single character
+character - represents a single character, written as #\a, or for escape characters #\space
 
 number
   integer - represents any whole number
@@ -69,10 +69,12 @@ procedure - represents any lambda function
 
 Standard Forms: ===================
 
-DEFINITION:
+DEFINITION / ASSIGNMENT:
 (define <variable> <expression>)
-(define (<variable> <variable> ...) <expression>)
-    Assign variable or variables to expression
+(update <variable> <expression>)
+    Assign/Updates variable or variables to expression,
+    can overwrite any previous type of a variable
+    but not overwrite global procedure names
 
 FUNCTIONS:
 (lambda (<variables> ...) <...>)
@@ -88,10 +90,6 @@ DECISIONS:
 SEQUENTIAL EVALUATION:
 (begin <definition/expression> ...)
     evaluated each definition or expression in sequence
-
-ASSIGNMENT:
-(update <variable> <expression>)
-    assign variable to expression, overwriting previous value, does not work on keywords
 
 Standard Procedures: ===============
 
@@ -116,17 +114,18 @@ NUMBERS:
     (mod a b)
       returns a mod b
   APPROX:
-    (floor a), (ceil a), (trunc a), (round a)
+    (floor a), (ceil a), (round a)
       where a is a decimal and returns an integer
   INEQUALITIES:
-    (< a b), (<= a b), (> a b), (>= a b), (= a b)
-      where a and b are numbers and returns a boolean
+    (lt a b), (lte a b), (gt a b), (gte a b), (eq a b)
+      where a and b are numbers and returns a boolean,
+      equivalent to <, <=, >, >=, ==, respectively
   MISC:
     (zero? a)
       returns whether the number is equal to zero
 
 CHARACTERS:
-  ch=, ch<, ch<=, ch>, ch>=
+  ch_eq, ch_lt, ch_lte, ch_gt, ch_gte
     same as number operations but performs on characters
 
 LISTS:
@@ -146,7 +145,7 @@ LISTS:
     removes the quote from the argument
 
 IDENTITY PREDICATES:
-  boolean?, symbol?, number?, char?, proc?, list?
+  boolean?, symbol?, number?, character?, proc?, list?, integer?, decimal>
     checks type of variable
 
 INPUT/OUTPUT:
@@ -154,5 +153,6 @@ INPUT/OUTPUT:
     prints all arguments to stdout
   (read type)
     grabs first value from stdin of type given
+    returns a list of characters
 
 

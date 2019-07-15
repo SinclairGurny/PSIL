@@ -3,7 +3,7 @@
    PSIL Execution Library
    Global Math function implementations
    @author Sinclair Gurny
-   @version 0.5
+   @version 0.9
    July 2019
 */
 
@@ -12,7 +12,6 @@
 namespace psil_exec {
 
   // === Helpers ===
-
   token_ptr make_number( std::string val, bool int_or_dec ) {
     // Make expression
     auto tmp_exp = std::make_unique<psil_parser::token_t>( "<expression>" );
@@ -23,8 +22,13 @@ namespace psil_exec {
     // Make int/dec
     std::string num_type = "<integer>";
     if ( !int_or_dec ) num_type = "<decimal>";
-    auto tmp_int_dec = std::make_unique<psil_parser::token_t>( "<integer>" );
+    auto tmp_int_dec = std::make_unique<psil_parser::token_t>( num_type );
     // Add val to integer
+    if ( int_or_dec ) {
+      try {
+	val = std::to_string( std::stoll( val ) );
+      } catch ( ... ) { std::string( "Conversion error" ); }
+    }
     auto tmp_val = std::make_unique<psil_parser::token_elem_t>( val );
     tmp_int_dec->aspects.push_back( std::move( tmp_val ) );
     // Add integer to number
@@ -251,6 +255,7 @@ namespace psil_exec {
     auto number = make_number( val, int_or_dec == 1 );
     node = std::move( number );
   }
+  
   // Division of all the numberical arguments
   void psil_div( stack_ptr & s, token_ptr & node ) {
     size_t idx = 0;
@@ -288,20 +293,53 @@ namespace psil_exec {
     auto number = make_number( val, false );
     node = std::move( number );
   }
-  // Finds the absolute value of the argument
-  void psil_abs( stack_ptr & s, token_ptr & node ) {}
-  // Finds the first argument mod the second argument
-  void psil_mod( stack_ptr & s, token_ptr & node ) {
-    // Must be integers
-  }
-  // Approx
-  void psil_floor( stack_ptr & s, token_ptr & node ) {
-    // return same if integer,
-    // round down otherwise
-  }
-  void psil_ceil( stack_ptr & s, token_ptr & node ) {}
-  void psil_trunc( stack_ptr & s, token_ptr & node ) {}
-  void psil_round( stack_ptr & s, token_ptr & node ) {}
 
+
+  void psil_round( token_ptr & node, std::function<long double(long double)> op ) {
+    // Verify argument is number
+    auto app = node->aspects.front()->tk.get();
+    if ( check_type( app->aspects[2]->tk ) != VarType::NUM ) {
+      throw std::string( "rounding procedure argument must be number" );
+    }
+
+    // Get number
+    //          <expression>             <constant>            <number>
+    auto num = app->aspects[2]->tk->aspects.front()->tk->aspects.front()->tk.get();
+    long double tmp = 0;
+    try {
+      //             <number>              <int/dec>           value
+      tmp = std::stold(num->aspects.front()->tk->aspects.front()->str);
+      auto number = make_number( std::to_string( op( tmp )), true );
+      node = std::move( number );
+    } catch ( ... ) {
+      throw std::string( "Number error" );
+    }
+    
+  }
+  
+  // Finds the first argument mod the second argument
+  void psil_mod( token_ptr & node ) {
+    // Verify argument is number
+    auto app = node->aspects.front()->tk.get();
+    if ( check_type( app->aspects[2]->tk ) != VarType::NUM ||
+	 check_type( app->aspects[3]->tk ) != VarType::NUM ) {
+      throw std::string( "mod procedure arguments must be number" );
+    }
+
+    // Get number
+    //          <expression>             <constant>            <number>
+    auto num1 = app->aspects[2]->tk->aspects.front()->tk->aspects.front()->tk.get();
+    auto num2 = app->aspects[3]->tk->aspects.front()->tk->aspects.front()->tk.get();
+    long double arg1 = 0, arg2 = 0;
+    try {
+      //             <number>              <int/dec>           value
+      arg1 = std::stoll(num1->aspects.front()->tk->aspects.front()->str);
+      arg2 = std::stoll(num2->aspects.front()->tk->aspects.front()->str);
+      auto number = make_number( std::to_string( remainder( arg1,  arg2 ) ), true );
+      node = std::move( number );
+    } catch ( ... ) {
+      throw std::string( "Number error" );
+    }
+  }
 
 }

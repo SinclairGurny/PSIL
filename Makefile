@@ -19,10 +19,13 @@ MAIN_CPP = src/repl.cpp
 ALL_H = $(PARSE_H) $(EVAL_H) $(EXEC_H) $(MAIN_H)
 ALL_CPP =  $(PARSE_CPP) $(EVAL_CPP) $(EXEC_CPP) $(MAIN_CPP)
 
+
+
 ifdef DEBUG
 	EXTRAS = -g -DDEBUG_MODE
 	OUTPUT = psil_debug
 else
+	EXTRAS = -O3
 	OUTPUT = psil
 endif
 
