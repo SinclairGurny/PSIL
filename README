@@ -18,8 +18,8 @@ Stands for Programming Some Idiotic Lisp.
 
 PSIL is a WIP interpreter for my own version of a LISP like language
 
-Current version 0.5
--- Missing a lot of builtin procedures
+Current version 0.9
+-- Missing scoping of defined variables
 
 written by Sinclair Gurny
 Starting in July 2019
