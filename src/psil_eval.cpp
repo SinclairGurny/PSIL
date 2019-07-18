@@ -2,7 +2,7 @@
     psil_eval.cpp
     PSIL Semantic Evaluation Implementation
     @author Sinclair Gurny
-    @version 0.9
+    @version 1.0
     July 2019
  */
 

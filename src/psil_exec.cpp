@@ -2,7 +2,7 @@
     psil_exec.cpp
     PSIL Execution Implementation
     @author Sinclair Gurny
-    @version 0.9
+    @version 1.0
     July 2019
 */
 
@@ -11,26 +11,26 @@
 namespace psil_exec {
 
   // ===================================================================================
+  // ================== Helper functions ===============================================
+  // ===================================================================================
 
-  // Copies tk and returns an identical token tree
+  // === Copies tk and returns an identical token tree
   token_ptr copy_tk( const token_ptr & tk ) {
     if ( tk == nullptr ) return nullptr;
     token_ptr tmp( new psil_parser::token_t( tk->type_name ) );
     for ( auto itr = tk->aspects.begin(); itr != tk->aspects.end(); ++itr ) {
       if ( (*itr)->elem_type == TE_Type::TOKEN ) {
-	std::unique_ptr<psil_parser::token_elem_t>
-	  elem_tmp( new psil_parser::token_elem_t( copy_tk( (*itr)->tk ) ) );
+	auto elem_tmp = std::make_unique<psil_parser::token_elem_t>( copy_tk( (*itr)->tk ) );
 	tmp->aspects.push_back( std::move( elem_tmp ) );
       } else {
-	std::unique_ptr<psil_parser::token_elem_t>
-	  elem_tmp( new psil_parser::token_elem_t( std::string( (*itr)->str ) ) );
+	auto elem_tmp = std::make_unique<psil_parser::token_elem_t>( std::string( (*itr)->str ) );
 	tmp->aspects.push_back( std::move( elem_tmp ) );
       }
     }
     return tmp;
   }
 
-  // Compares tk1 and tk2 structure and content for being identical
+  // === Compares tk1 and tk2 structure and content for being identical
   bool equal_tk( const token_ptr & tk1, const token_ptr & tk2 ) {
     if ( (tk1 == nullptr && tk2 != nullptr) || (tk1 != nullptr && tk2 == nullptr) ) return false;
     if ( tk1->type_name != tk2->type_name ) return false;
@@ -49,7 +49,7 @@ namespace psil_exec {
     return true;
   }
 
-  // Finds token What in token Where and replaces occurence of What with That
+  // === Finds token What in token Where and replaces occurence of What with That
   bool find_replace( token_ptr & where, const token_ptr & what, token_ptr & that ) {
     if ( where == nullptr ) { return false; }
     bool is_expr = where->type_name == "<expression>" && where->aspects.size() == 1
@@ -163,21 +163,20 @@ namespace psil_exec {
 
 
   // ===================================================================================
+  // ================ SYMBOL TABLE STACK   =============================================
+  // ===================================================================================
 
   // Push to stack
   void stack_t::push() {
-    ++current_scope;
-    if ( current_scope > 1000 ) {
-      throw std::string( "Stack above debug limits" );
-    }
+    table.push_back( symbol_table_t() );
   }
   
   // Pop stack
   void stack_t::pop() {
-    if ( current_scope == 0 ) {
+    if ( table.size() == 0 ) {
       throw std::string( "Cannot pop an empty stack" );
-      --current_scope;
     }
+    table.pop_back();	
   }
 
   // Check if variable exists in symbol table
@@ -185,9 +184,12 @@ namespace psil_exec {
     auto gret = global_table.find( n );
     if ( gret != global_table.end() )
       return stack_t::ExistsType::GLOBAL;
-    auto lret = table.find( n );
-    if ( lret != table.end() )
-      return stack_t::ExistsType::LOCAL;
+    auto itr = table.rbegin();
+    for ( ; itr != table.rend(); ++itr ) {
+      auto lret = itr->find( n );
+      if ( lret != itr->end() )
+	return stack_t::ExistsType::LOCAL;      
+    }
     return stack_t::ExistsType::NO;
   }
 
@@ -198,19 +200,28 @@ namespace psil_exec {
       if ( itr != global_table.end() )
 	return copy_tk( itr->second->value );
     } else if ( e == stack_t::ExistsType::LOCAL ) {
-      auto itr = table.find( n );
-      if ( itr != table.end() )
-	return copy_tk( itr->second->value );
+      auto itr = table.rbegin();
+      size_t count = 0;
+      for ( ; itr != table.rend(); ++itr, count++ ) {
+	auto ret = itr->find( n );
+	if ( ret != itr->end() ) {
+	  //std::cout << "Symbol lookup " << n << " " << table.size() - 1 - count << std::endl; 
+	  return copy_tk( ret->second->value );
+	}
+      }
     }
     return nullptr;
   }
 
   // Adds variable and its value to symbol table
   void stack_t::add( std::string n, const token_ptr & v ) {
+    if ( table.size() == 0 ) { throw std::string( "Stack empty" ); }
     VarType t = check_type( v );
     if ( t == VarType::ERROR ) throw std::string( "Could not determine type of expression" );
     std::unique_ptr<stack_elem_t> se( new stack_elem_t( n, t, v ) );
-    table.insert( std::make_pair( n, std::move( se ) ) );
+    size_t loc = table.size()-1;
+    //std::cout << "Inserting " << n << " " << loc << std::endl;
+    table[loc].insert( std::make_pair( n, std::move( se ) ) );
   }
 
   // Updates variable's value in symbol table
@@ -222,10 +233,14 @@ namespace psil_exec {
 	itr->second->value = std::move( copy_tk( v ) );
       }
     } else if ( e == stack_t::ExistsType::LOCAL ) {
-      auto itr = table.find( n );
-      if ( itr != table.end() ) {
-	itr->second->value.reset(); // delete old value
-	itr->second->value = std::move( copy_tk( v ) );
+      auto itr = table.rbegin();
+      for ( ; itr != table.rend(); ++itr ) {
+	auto ret = itr->find( n );
+	if ( ret != itr->end() ) {
+	  ret->second->value.reset();
+	  ret->second->value = std::move( copy_tk( v ) );
+	  return;
+	}
       }
     }
   }
@@ -315,7 +330,7 @@ namespace psil_exec {
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "null?", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
-    tmp = std::make_unique<stack_elem_t>( "quote", VarType::PROC, nullptr );
+    tmp = std::make_unique<stack_elem_t>( "to_quote", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "unquote", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
@@ -343,6 +358,8 @@ namespace psil_exec {
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
     tmp = std::make_unique<stack_elem_t>( "read", VarType::PROC, nullptr );
     global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
+    tmp = std::make_unique<stack_elem_t>( "newline", VarType::PROC, nullptr );
+    global_table.insert( std::make_pair( tmp->var_name, std::move( tmp ) ) );
   }
   
   // ===================================================================================
@@ -351,13 +368,10 @@ namespace psil_exec {
     
     auto ast = psil_parser::parse( lang, input );
     if ( ast ) {
-#ifdef DEBUG_MODE
-      ast->print();
-#endif      
       // eval
       try {
 	if ( !psil_eval::check_node( ast.get() ) )
-	std::cerr << "Unknown Error while verifying code!" << std::endl;
+	  std::cerr << "Unknown Error while verifying code!" << std::endl;
       } catch ( std::string exp ) {
 	std::cerr << "Error while verifying code:: " << exp << std::endl;
 	return;
@@ -368,12 +382,6 @@ namespace psil_exec {
 	bool rem = false;
 	auto stack = std::make_unique<stack_t>();
 	exec( stack, ast, rem );
-#ifdef DEBUG_MODE
-	if ( !rem ) {
-	  ast->print();
-	}
-#endif	
-	std::cout << std::endl;
       } catch ( std::string exp ) {
 	std::cerr << "Runtime error:: " << exp << std::endl;
       }
@@ -383,52 +391,19 @@ namespace psil_exec {
     }
   }
 
+  // === Execute code in file given by filename
   void run_file( const std::unique_ptr<psil_parser::language_t> & lang, std::string filename ) {
-
-    // Read contents from file
+    // === Open file ===
     std::ifstream code( filename );
     if ( !code.good() ) {
       std::cerr << "Could not open file" << std::endl;
+      return;
     }
-
-    std::string input;
-    std::string tmp;
+    // === Combine into string ===
+    std::string input, tmp;
     while ( code >> tmp ) { input += tmp + " "; }
-#ifdef DEBUG_MODE
-    std::cout << input << std::endl;
-#endif
-    
-    auto ast = psil_parser::parse( lang, input );
-    if ( ast ) {
-#ifdef DEBUG_MODE
-      ast->print();
-#endif      
-      // eval
-      try {
-	if ( !psil_eval::check_node( ast.get() ) )
-	std::cerr << "Unknown Error while verifying code!" << std::endl;
-      } catch ( std::string exp ) {
-	std::cerr << "Error while verifying code:: " << exp << std::endl;
-	return;
-      }
-      
-      // exec
-      try {
-	bool rem = false;
-	auto stack = std::make_unique<stack_t>();
-	exec( stack, ast, rem );
-#ifdef DEBUG_MODE
-	if ( !rem ) {
-	  ast->print();
-	}
-#endif	
-      } catch ( std::string exp ) {
-	std::cerr << "Runtime error:: " << exp << std::endl;
-      }
-      
-    } else {
-      std::cerr << "Error while parsing input" << std::endl;
-    }
+    // === Run code ===
+    repl( lang, input );
   }
   
   // ===================================================================================
@@ -437,13 +412,20 @@ namespace psil_exec {
   void exec( stack_ptr & s, token_ptr & ast, bool& rem ) {
     if ( ast == nullptr ) { return; }
     if ( ast->type_name == "<program>" ) {
+      // Push to stack
+      s->push();
       if ( !ast->aspects.empty() && ast->aspects.front()->elem_type == TE_Type::TOKEN ) {
 	exec( s, ast->aspects.front()->tk, rem );
 	// all forms erased, erase program
 	if ( rem ) ast->aspects.clear();
       }
+      // Pop from stack
+      s->pop();
       return;
     } else if ( ast->type_name == "<form>" ) {
+      // Push to stack
+      bool do_push = ast->aspects.size() > 1;
+      if ( do_push ) s->push();
       size_t tk_count = 0, rm_count = 0;
       for ( auto itr = ast->aspects.begin(); itr != ast->aspects.end();  ) {
 	if ( (*itr)->elem_type == TE_Type::TOKEN ) {
@@ -467,17 +449,13 @@ namespace psil_exec {
 	ast->aspects.clear();
 	std::move( tmp->tk->aspects.begin(), tmp->tk->aspects.end(), std::back_inserter( ast->aspects ) );
       }
+      // Pop stack
+      if ( do_push ) s->pop();
       return;
     } else if ( ast->type_name == "<expression>" ) {
-#ifdef DEBUG_MODE
-      std::cout << "EXP" << std::endl;
-#endif
       auto expr = ast->aspects.front()->tk.get();
       if ( ast->aspects.size() == 1 ) {
 	if ( expr->type_name == "<constant>" ) {
-#ifdef DEBUG_MODE
-	  std::cout << "CONST" << std::endl;
-#endif
 	  return;
 	} else if ( expr->type_name == "<variable>" ) {
 	  exec_var( s, ast, rem );
@@ -493,6 +471,8 @@ namespace psil_exec {
 	  exec_app( s, ast, rem );
 	}
       } else if ( ast->aspects.size() >= 4 ) { // (begin <expr>+)
+	// Push to stack
+	s->push();
 	size_t tk_count = 0, rm_count = 0;
 	for ( auto itr = ast->aspects.begin(); itr != ast->aspects.end(); ) {
 	  if ( (*itr)->elem_type == TE_Type::TOKEN ) {
@@ -515,6 +495,8 @@ namespace psil_exec {
 	  ast->aspects.clear();
 	  std::move( tmp->tk->aspects.begin(), tmp->tk->aspects.end(), std::back_inserter( ast->aspects ) );
 	}
+	// Pop stack
+	s->pop();
 	return;
       } else {
 	throw std::string( "Unknown expression type" );
@@ -532,9 +514,6 @@ namespace psil_exec {
   
   // === Execute if expression
   void exec_if( stack_ptr & s, token_ptr & node, bool& rem ) {
-#ifdef DEBUG_MODE
-    std::cout << "IF" << std::endl;
-#endif
     auto cond = node->aspects.front()->tk.get();
     bool r = false;
     exec( s, cond->aspects[2]->tk, r );
@@ -551,9 +530,6 @@ namespace psil_exec {
   
   // === Execute cond expression
   void exec_cond( stack_ptr & s, token_ptr & node, bool& rem ) {
-#ifdef DEBUG_MODE
-    std::cout << "COND" << std::endl;
-#endif
     auto cond = node->aspects.front()->tk.get();
     bool r = false; // placeholder, not needed
     exec( s, cond->aspects[2]->tk, r );
@@ -569,19 +545,13 @@ namespace psil_exec {
 
   // === Execute definition
   void exec_def( stack_ptr & s, token_ptr & node ) {
-#ifdef DEBUG_MODE
-    std::cout << "DEF" << std::endl;
-#endif
     if ( node->aspects[1]->str == "define" ) {
       auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
-#ifdef DEBUG_MODE
-      std::cout << "grabbed " << iden << std::endl;
-#endif
       auto ret = s->exists( iden );
       if ( ret == stack_t::ExistsType::GLOBAL ) {
 	throw std::string( "Cannot redefine a global procedure" );
       } else if ( ret == stack_t::ExistsType::LOCAL ) {
-	throw std::string( "Cannot redefine a local variable, use set!" );
+	throw std::string( "Cannot redefine a local variable, use update" );
       } else { // NO - variable is not known
 	bool r = false;
 	exec( s, node->aspects[3]->tk, r);
@@ -590,9 +560,6 @@ namespace psil_exec {
       }
     } else if ( node->aspects[1]->str == "update" ) {
       auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
-#ifdef DEBUG_MODE
-      std::cout << "update grabbed " << iden << std::endl;
-#endif
       auto ret = s->exists( iden );
       if ( ret == stack_t::ExistsType::GLOBAL ) {
 	throw std::string( "Cannot set! a global procedure" );
@@ -611,13 +578,7 @@ namespace psil_exec {
 
   // === Execute variable expansion
   void exec_var( stack_ptr & s, token_ptr & node, bool& rem ) {
-#ifdef DEBUG_MODE
-    std::cout << "Var" << std::endl;
-#endif
     auto var_name = node->aspects.front()->tk->aspects.front()->tk->aspects.front()->str;
-#ifdef DEBUG_MODE
-    std::cout << "Looking for " << var_name << std::endl;
-#endif
     auto ret = s->exists( var_name );
     if ( ret == stack_t::ExistsType::GLOBAL ) {
       std::cerr <<  "Cannot access global procedures yet" << std::endl;
@@ -635,9 +596,7 @@ namespace psil_exec {
 
   // === Execute application of procedures
   void exec_app( stack_ptr & s, token_ptr & node, bool & rem ) {
-#ifdef DEBUG_MODE
-    std::cout << "App" << std::endl;
-#endif
+    bool exec_args = true; // Whether to execute arguments
     size_t idx = 0; // Keeps track of location within expression
     std::string func_name; // Used to lookup proper global procedures
     stack_t::ExistsType func_loc = stack_t::ExistsType::NO; // Says whether function is lambda or builtin
@@ -662,6 +621,7 @@ namespace psil_exec {
 		  if ( func_loc != stack_t::ExistsType::GLOBAL ) {
 		    throw std::string( "Could not find proc" );
 		  }
+		  if ( func_name == "to_quote" ) exec_args = false;
 		}
 	      } else { // Locally defined operation
 		bool r = false;
@@ -699,23 +659,27 @@ namespace psil_exec {
 	    }
 	  }
 	} else if ( idx > 1 && idx < (node->aspects.front()->tk->aspects.size()-1) ) { // Arguments
-	  bool r = false;
-	  exec( s, (*itr)->tk, r );
-	  if ( r ) node->aspects.front()->tk->aspects.erase( itr );
+	  if ( exec_args ) {
+	    bool r = false;
+	    exec( s, (*itr)->tk, r );
+	    if ( r ) node->aspects.front()->tk->aspects.erase( itr );
+	  }
 	}
       }
     }
     // === Run operations ===
     if ( func_loc == stack_t::ExistsType::GLOBAL ) {
+      // If global, apply correct function
       apply_global_proc( s, node, rem, func_name );
     } else if ( func_loc == stack_t::ExistsType::LOCAL ) {
-      // Run lambda expression
+      // If local, apply lambda expression
       apply_lambda( s, node, rem );
     }
   }
   
-
+  // === Apply arguments to lambda expression
   void apply_lambda( stack_ptr & s, token_ptr & node, bool& rem ) {
+    // === Check for issues ===
     //       <expression>           <application>
     auto app = node->aspects.front()->tk.get();
     //           <application>     <expression>        <lambda>
@@ -724,12 +688,12 @@ namespace psil_exec {
     size_t lambda_args = lambda->aspects[2]->tk->aspects.size() - 2;
     size_t app_args = app->aspects.size() - 3;
     if ( lambda_args != app_args ) { // Arity Error
-      std::string err = "Arity mismatch expected:" + std::to_string( lambda_args );
+      std::string err = "Arity mismatch, expected:" + std::to_string( lambda_args );
       err += " given:" + std::to_string( app_args );
       throw std::string( err );
     }
 
-    // Substitute arguments
+    // === Substitute arguments into lambda body ====
     auto lambda_end = lambda->aspects[2]->tk.get();
     auto litr = lambda->aspects[2]->tk->aspects.begin();
     std::advance( litr, 1 );
@@ -744,8 +708,8 @@ namespace psil_exec {
       litr = lambda->aspects[2]->tk->aspects.erase( litr );
       aitr = app->aspects.erase( aitr );
     }
-    
-    // Check arguments again
+
+    // === Double check for errors while applying ===
     lambda_args = lambda->aspects[2]->tk->aspects.size() - 2;
     app_args = app->aspects.size() - 3;
 
@@ -753,14 +717,9 @@ namespace psil_exec {
       throw std::string( "Error while applying lambda expression" );
     }
 
+    // === Update AST with result of lambda application ===
     auto body = std::move( lambda->aspects[3]->tk );
-    node->aspects.clear();
-    node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( "(" ) );
-    node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( "begin" ) );
-    for ( auto itr = body->aspects.begin(); itr != body->aspects.end(); ++itr ) {
-      node->aspects.push_back( std::move( *itr ) );
-    }
-    node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( ")" ) );
+    node = std::move( body->aspects.front()->tk );
   }
 
 }

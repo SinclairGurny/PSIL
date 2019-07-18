@@ -3,7 +3,7 @@
    PSIL Execution Library
    Global Comparison Function Implementations
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 
@@ -11,6 +11,7 @@
 
 namespace psil_exec {
 
+  // Pull value out of number as a long double
   long double psil_get_double( token_ptr & node ) {
     if ( check_type( node ) != VarType::NUM ) {
       throw std::string( "Not number" );
@@ -29,6 +30,7 @@ namespace psil_exec {
     return 0.0;
   }
 
+  // Pull value out of character as a string
   std::string psil_get_char( token_ptr & node ) {
     if ( check_type( node ) != VarType::CHAR ) {
       throw std::string( "Not character" );
@@ -40,7 +42,7 @@ namespace psil_exec {
     return psil_char( num->aspects.front()->str );
   }
   
-  // Inequalities
+  // Apply a comparison operation
   void psil_num_compare( token_ptr & node,
 			 std::function<bool(long double, long double)> comp ) {
     try {
@@ -55,8 +57,7 @@ namespace psil_exec {
     }
   }
   
-  void psil_is_zero( token_ptr & node ) {}
-  // Character
+  // Apply a comparison operation on characters
   void psil_char_compare( token_ptr & node,
 			 std::function<bool(std::string, std::string)> comp ) {
     try {

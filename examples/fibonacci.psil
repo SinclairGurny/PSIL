@@ -1,6 +1,6 @@
 (begin
   (define fib (lambda (n)
-		(if (or (equal? n 0) (equal? n 1) (equal? n -1))
+		(if (lte n 1)
 		    n
 		    (+ (fib (- n 1)) (fib (- n 2))))))
   (println (fib 1))

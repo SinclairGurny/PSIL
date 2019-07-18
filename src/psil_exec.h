@@ -20,17 +20,25 @@ namespace psil_exec {
   // Forward declarations
 
   struct stack_t;
+  struct stack_elem_t;
 
+  // ===================================================================================
   // === Typedefs ======================================================================
+  // ===================================================================================
   
+  // redeclare for ease of use
   using TE_Type = psil_parser::token_elem_t::TE_Type;
+  // shorten long types
   using token_ptr = std::unique_ptr<psil_parser::token_t>;
   using stack_ptr = std::unique_ptr<stack_t>;
+  using symbol_table_t = std::map<std::string, std::unique_ptr<stack_elem_t> >;
 
+  // types of variables
   enum VarType { BOOL, CHAR, NUM, LIST, PROC, SYMBOL, UNKNOWN, ERROR };
   
   // ===================================================================================
-  // Internal Helper Functions
+  // ========== Internal Helper Functions ==============================================
+  // ===================================================================================
   
   /**
      Copies token recursively
@@ -43,8 +51,8 @@ namespace psil_exec {
   bool equal_tk( const token_ptr & tk1, const token_ptr & tk2 );
 
   /**
-     Finds token what within token where, and replaces occurence with token that
-     that is moved to the new location
+     Finds token 'what' within token 'where', and replaces occurences with token 'that'
+     which is copied to the new location
   */
   bool find_replace( token_ptr & where, const token_ptr & what, token_ptr & that );
   
@@ -53,13 +61,11 @@ namespace psil_exec {
      Assumes top level token is an expression
   */
   VarType check_type( const token_ptr & tk );
-
   
   /**
      Checks to see if a expression evaluates to true
   */
   bool is_true( stack_ptr & s, token_ptr & node );
-
 
   /**
      Checks to see if a number is zero (0 or 0.0)
@@ -67,7 +73,14 @@ namespace psil_exec {
   bool is_zero( token_ptr & node );
 
   // ===================================================================================
+  // ========= Symbol Table Stack ======================================================
+  // ===================================================================================
   
+
+  /**
+     Represents a single element in symbol table,
+     Stores value and some information about the variable
+  */
   struct stack_elem_t {
     stack_elem_t( std::string n, VarType t, const token_ptr & v ) :
       var_name(n), type(t), value( copy_tk( v ) ), scope_lvl(0) {}
@@ -79,23 +92,28 @@ namespace psil_exec {
     token_ptr value;
     size_t scope_lvl;
   };
-  
+
+
+  /**
+     Represents 
+  */
   struct stack_t {
+    // Used to represent where a variable is defined
     enum ExistsType { NO, GLOBAL, LOCAL };
 
-    stack_t() : current_scope(0) { init(); }
+    stack_t() { init(); }
     
-    void add( std::string n, const token_ptr & v );
     void init();
     void push();
     void pop();
-    ExistsType exists( std::string n );
-    token_ptr get( std::string n, ExistsType e );
-    void update( std::string n, ExistsType e, const token_ptr & v );
 
-    size_t current_scope;
-    std::map<std::string, std::unique_ptr<stack_elem_t> > global_table;
-    std::map<std::string, std::unique_ptr<stack_elem_t> > table;
+    ExistsType exists( std::string n );
+    void add( std::string n, const token_ptr & v );
+    void update( std::string n, ExistsType e, const token_ptr & v );
+    token_ptr get( std::string n, ExistsType e );
+
+    symbol_table_t global_table;
+    std::vector< symbol_table_t > table;
   };
   
   // ===================================================================================
@@ -103,8 +121,7 @@ namespace psil_exec {
   /**
      Read, Evaluate, Print, Loop
      This function does the evaluation and printing
-
-     @param lang -language to parse input using
+     @param lang - anguage to parse input using
      @param input - input to evaluate
   */
   void repl( const std::unique_ptr<psil_parser::language_t> & lang, std::string input );
@@ -112,7 +129,9 @@ namespace psil_exec {
   // Perform single read evaluate print cycle for contents of file
   void run_file( const std::unique_ptr<psil_parser::language_t> & lang, std::string filename );
 
-  // ================== Exec functions ================================================
+  // ===================================================================================
+  // ================== Exec functions =================================================
+  // ===================================================================================
   
   /**
      Executes the abstract syntax tree given
@@ -159,17 +178,22 @@ namespace psil_exec {
   */
   void apply_lambda( stack_ptr & s, token_ptr & node, bool& rem );
 
-  // ==============================================================================
+  // ===================================================================================
+  // ===================================================================================
   
-  // Applies the global functions 
+  // Applies the global functions, given its name fun
   void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun );
   
 
-  // ==============================================================================
+  // ===================================================================================
+  // ============ Small helper functions ===============================================
+  // ===================================================================================
 
-
+  // Character converstion
   std::string psil_char( std::string ch );
   std::string psil_char( char c );
+
+  // Convert constant to printable format
   std::string tk_to_string( token_ptr & tk );
   
   // Helper functions to make tokens
@@ -177,9 +201,10 @@ namespace psil_exec {
   token_ptr make_character( std::string val );
   token_ptr make_number( std::string val, bool int_or_dec );
 
-  // =============================================================================
-  // ===== Global functions ======================================================
-
+  // ===================================================================================
+  // ===== Global functions ============================================================
+  // ===================================================================================
+  
   // Input/Output =======================================
   // Print given token to cout
   void print( token_ptr & node, bool newline );
@@ -235,7 +260,9 @@ namespace psil_exec {
   // Check if the list is null ()
   void psil_is_null( token_ptr & node );
   // Quote
+  // Convert psil code into quoted datums
   void psil_quote( stack_ptr & s, token_ptr & node );
+  // Convert quoted datum's into runable code
   void psil_unquote( stack_ptr & s, token_ptr & node );
   // Identity predicates ================================
   // Checks if the token is of that type

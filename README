@@ -16,20 +16,19 @@ PSIL:
 Stands for Programming Some Idiotic Lisp.
 (It's actually based on Scheme Syntax)
 
-PSIL is a WIP interpreter for my own version of a LISP like language
+PSIL is a interpreter for my own version of a LISP like language
 
-Current version 0.9
--- Missing scoping of defined variables
+Current version 1.0
+For more information in docs/
 
 written by Sinclair Gurny
-Starting in July 2019
+July 2019
 
 ================================================================================================
 
 Compiling:
 make - for normal
 make debug - full parsing output
-make debug_slow - full parsing output with delay
 make clean - delete unnecessary files
 
 Running:
@@ -45,6 +44,7 @@ psil - displays syntax of current version of PSIL
 =======================================================
 
 Examples:
+See examples/ for more.
 
 Hello World Program:
 >> (print #\H #\e #\l #\l #\o #\, #\space #\W #\o #\r #\l #\d #\!)

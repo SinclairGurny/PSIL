@@ -2,7 +2,7 @@
    psil_exec_funcs.cpp
    PSIL Execution Library Global function implementations
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 
@@ -100,27 +100,27 @@ namespace psil_exec {
     // ========================== Inequalities  ================================
     else if ( fun == "lt" ) {
       if ( arg_count != 2 )
-	throw std::string( "lt: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "lt: Wrong number of arguments given, 2 expected" );
       auto comp = [](long double a, long double b) -> bool { return a < b; };
       psil_num_compare( node, comp );
     } else if ( fun == "lte" ) {
       if ( arg_count != 2 )
-	throw std::string( "lte: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "lte: Wrong number of arguments given, 2 expected" );
       auto comp = [](long double a, long double b) -> bool { return a <= b; };
       psil_num_compare( node, comp );
     } else if ( fun == "gt" ) {
       if ( arg_count != 2 )
-	throw std::string( "gt: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "gt: Wrong number of arguments given, 2 expected" );
       auto comp = [](long double a, long double b) -> bool { return a > b; };
       psil_num_compare( node, comp );
     } else if ( fun == "gte" ) {
       if ( arg_count != 2 )
-	throw std::string( "gte: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "gte: Wrong number of arguments given, 2 expected" );
       auto comp = [](long double a, long double b) -> bool { return a >= b; };
       psil_num_compare( node, comp );
     } else if ( fun == "eq" ) {
       if ( arg_count != 2 )
-	throw std::string( "eq: Wrong number of arguments given, 1+ expected" );
+	throw std::string( "eq: Wrong number of arguments given, 2 expected" );
       auto comp = [](long double a, long double b) -> bool {
 		    return (a-b) < 0.0000000001 && (a-b) > -0.0000000001;  };
       psil_num_compare( node, comp );
@@ -197,19 +197,19 @@ namespace psil_exec {
       if ( arg_count != 1 )
 	throw std::string( "null?: Wrong number of arguments given, 1 expected" );
       psil_is_null( node );
-    } else if ( fun == "quote" ) {
+    } else if ( fun == "to_quote" ) {
       if ( arg_count != 1 )
-	throw std::string( "quote: Wrong number of arguments given, 1 expected" );
-      // TODO
+	throw std::string( "to_quote: Wrong number of arguments given, 1 expected" );
+      psil_quote( s, node );
     } else if ( fun == "unquote" ) {
       if ( arg_count != 1 )
 	throw std::string( "unquote: Wrong number of arguments given, 1 expected" );
-      // TODO
+      psil_unquote( s, node );
     }
     // ======================= Identity  =========================================
     else if ( fun == "boolean?" ) {
       if ( arg_count != 1 )
-	throw std::string( "bool?: Wrong number of arguments given, 1 expected" );
+	throw std::string( "boolean?: Wrong number of arguments given, 1 expected" );
       psil_type_check( node, VarType::BOOL );
     } else if ( fun == "number?" ) {
       if ( arg_count != 1 )
@@ -217,7 +217,7 @@ namespace psil_exec {
       psil_type_check( node, VarType::NUM );
     } else if ( fun == "character?" ) {
       if ( arg_count != 1 )
-	throw std::string( "char: Wrong number of arguments given, 1 expected" );
+	throw std::string( "character?: Wrong number of arguments given, 1 expected" );
       psil_type_check( node, VarType::CHAR );
     } else if ( fun == "symbol?" ) {
       if ( arg_count != 1 )
@@ -299,15 +299,25 @@ namespace psil_exec {
     return val;
   }
 
+  // Converts token back into printable string
   std::string tk_to_string( token_ptr & tk ) {
     if ( tk->type_name == "<constant>" || tk->type_name == "<datum>" ) {
       auto const_type = tk->aspects.front()->tk.get();
       if ( const_type->type_name == "<boolean>" ) {
-	return const_type->aspects.front()->str;
+	return const_type->aspects.front()->str + " ";
       } else if ( const_type->type_name == "<number>" ) {
-	return const_type->aspects.front()->tk->aspects.front()->str;
+	return const_type->aspects.front()->tk->aspects.front()->str + " ";
       } else if ( const_type->type_name == "<character>" ) {
 	return psil_char( const_type->aspects.front()->str );
+      } else if ( const_type->type_name == "<symbol>" ) {
+	auto iden = const_type->aspects.front()->tk.get();
+	if ( iden->aspects.front()->elem_type == TE_Type::TOKEN ) {
+	  // Keyword or Operator
+	  return iden->aspects.front()->tk->aspects.front()->str + " ";
+	} else {
+	  // Locally defined name
+	  return iden->aspects.front()->str + " ";
+	}
       } else if ( const_type->type_name == "<list_def>" ) {
 	std::string ret = tk_to_string( const_type->aspects[2]->tk );
 	return "'" + ret;
@@ -318,7 +328,7 @@ namespace psil_exec {
 	    ret += tk_to_string( (*itr)->tk );
 	  }
 	}
-	return "(" + ret + ")";
+	return "( " + ret + ")";
       }
     } else {
       std::string ret = "";

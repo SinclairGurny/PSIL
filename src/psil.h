@@ -2,7 +2,7 @@
    psil.h
    PSIL Basic Common Use Functionality
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 

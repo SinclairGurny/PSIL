@@ -2,7 +2,7 @@
     psil_eval.h
     PSIL Semantic Evaluation Library
     @author Sinclair Gurny
-    @version 0.5
+    @version 1.0
     July 2019
  */
 
@@ -18,7 +18,6 @@ namespace psil_eval {
   /**
      Checks expressions for semantic errors
      Assumes token is expression
-
      @param - token to check
      @throws - std::string of semantic error
      @returns - bool, true if no errors found
@@ -28,7 +27,6 @@ namespace psil_eval {
   /**
      Checks lambda expressions for semantic errors
      Assumes token is contains lambda
-
      @param - token to check
      @throws - std::string of semantic error
      @returns - bool, true if no errors found
@@ -38,7 +36,6 @@ namespace psil_eval {
   /**
      Checks definitions for semantic errors
      Assumes token is definition
-
      @param - token to check
      @throws - std::string of semantic error
      @returns - bool, true if no errors found
@@ -47,7 +44,6 @@ namespace psil_eval {
 
   /**
      Checks any type of token for semantic errors
-
      @param - token to check
      @throws - std::string of semantic error
      @returns - bool, true if no errors found

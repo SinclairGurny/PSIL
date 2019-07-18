@@ -1,5 +1,4 @@
 
-
 OBJ = build/parser.o build/eval.o build/exec.o build/funcs.o build/bool.o build/comp.o \
 	build/list.o build/math.o build/types.o build/repl.o
 
@@ -18,7 +17,6 @@ MAIN_CPP = src/repl.cpp
 
 ALL_H = $(PARSE_H) $(EVAL_H) $(EXEC_H) $(MAIN_H)
 ALL_CPP =  $(PARSE_CPP) $(EVAL_CPP) $(EXEC_CPP) $(MAIN_CPP)
-
 
 
 ifdef DEBUG

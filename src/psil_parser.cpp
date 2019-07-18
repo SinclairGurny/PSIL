@@ -2,7 +2,7 @@
     psil_parser.cpp
     PSIL Parser implementation
     @author Sinclair Gurny
-    @version 0.9
+    @version 1.0
     July 2019
  */
 
@@ -44,24 +44,39 @@ namespace psil_parser {
     std::cout << std::endl;
   }
 
+  // === Turns token back into code
+  std::string token_t::to_code() {
+    std::string ret = "";
+    for ( auto itr = this->aspects.begin(); itr != this->aspects.end(); ++itr ) {
+      if ( (*itr)->elem_type == token_elem_t::TE_Type::STRING ) { // String
+	ret += (*itr)->str + " ";
+      } else { // TOKEN
+	ret += (*itr)->tk->to_code();
+      }
+    }
+    return ret;
+  }
 
   // ========== Parser =================================================
-
 
   // === Constructs parser and tokenize rules
   parser_t::parser_t( std::string n, std::string rs ) :  name(n) {
     // split rule list into parts
     std::string rule;
     size_t loc;
+    // Split by |'s
     while ( (loc = rs.find("|")) != std::string::npos ) {
       rule = rs.substr(0, loc);
       rs.erase(0, loc+1);
+      // Remove leading and trailing spaces
       rule = std::regex_replace(rule, std::regex("^ +| +$|( ) +"), "$1");
       if ( !check_parens( rule ) ) { throw std::string( "Error: mismatching parens" ); }
       str_vec rvec = tokenize_rule( rule );
       rules.push_back( rvec );
     }
+    // Handle case of no |'s
     if ( rs.size() > 0 ) {
+      // Remove leading and trailing spaces
       rs = std::regex_replace( rs, std::regex("^ +| +$|( ) +"), "$1");
       if ( !check_parens( rs ) ) { throw std::string( "Error: mismatching parens" ); }
       str_vec rvec = tokenize_rule( rs );
@@ -72,7 +87,6 @@ namespace psil_parser {
 
   // === Prints parser
   void parser_t::print( int depth = 1 ) const {
-    //if ( this == nullptr ) return;
     std::cout << std::string(depth*2, ' ') << name << std::endl;
     std::cout << std::string(depth*3, ' ');
     for ( auto rule : rules ) {
@@ -102,35 +116,28 @@ namespace psil_parser {
   group_t * language_t::add( group_t * g ) {
     std::unique_ptr<lang_elem_t> elem( new lang_elem_t( g ) );
     this->items.push_back( std::move(elem) );
-
     return g;
   }
 
   // === Adds parser to lanuage
   parser_t * language_t::add( parser_t * p ) {
     auto ret = all_parsers.insert( std::make_pair( p->name, p ) );
-    if ( !ret.second ) {
-      std::string str( "Error: Parser of same name already in language" );
-      throw str;
+    if ( !ret.second ) { // Did not insert
+      throw std::string( "Error: Parser of same name already in language" );
     }
-
     std::unique_ptr<lang_elem_t> elem( new lang_elem_t( p ) );
     this->items.push_back( std::move(elem) );
-
     return p;
   }
 
   // Add parser to group
   parser_t * language_t::add( group_t * g, parser_t * p ) {
     auto ret = all_parsers.insert( std::make_pair( p->name, p ) );
-    if ( !ret.second ) {
-      std::string str( "Error: Parser of same name already in language" );
-      throw str;
+    if ( !ret.second ) { // Did not insert
+      throw std::string( "Error: Parser of same name already in language" );
     }
-  
     std::unique_ptr<lang_elem_t> elem( new lang_elem_t( p ) );
     g->items.push_back( std::move(elem) );
-
     return p;
   }
 
@@ -138,13 +145,11 @@ namespace psil_parser {
   group_t * language_t::add( group_t * g_up, group_t * g_down ) {
     std::unique_ptr<lang_elem_t> elem( new lang_elem_t( g_down ) );
     g_up->items.push_back( std::move(elem) );
-
     return g_down;
   }
 
   /**
      Find parser by name inside language
-
      @param pn - name of parser
      @return parser pointer if found, nullptr if not
   */
@@ -156,16 +161,13 @@ namespace psil_parser {
       return ret_itr->second.get();
     }
     return nullptr;
-
   }
 
   /**
      Find all top level parsers inside language
-
      @return vector of parser pointers
   */
   std::vector<parser_t * > language_t::get_top_parsers() const {
-  
     std::vector<parser_t * > ret;
     for ( auto it = items.begin(); it != items.end(); ++it ) {
       if ( (*it)->elem_type == lang_elem_t::LE_Type::PARSER ) {
@@ -209,11 +211,13 @@ namespace psil_parser {
 
   // === Checks whether input is a <rule> that can be expanded
   bool is_rule( std::string input ) {
+    // Check for <...>
     if ( input.size() >= 3 ) {
       if ( input[0] == '<' && input[input.size()-1] == '>' ) {
 	return true;
       }
     }
+    // Check for <...>* or <...>+
     if ( input.size() >= 4 ) {
       size_t len = input.size();
       if ( input[0] == '<' && input[len-2] == '>' &&
@@ -226,6 +230,7 @@ namespace psil_parser {
 
   // === Checks whether input is a {regex} expression
   bool is_regex( std::string input ) {
+    // Check for {...}
     if ( input.size() >= 3 ) {
       if ( input[0] == '{' && input[input.size()-1] == '}' ) {
 	return true;
@@ -288,7 +293,6 @@ namespace psil_parser {
 	}
       }
     }
-
     if ( count > 0 ) {
       return std::make_pair( count, "Missing closing paren" );
     }
@@ -332,7 +336,7 @@ namespace psil_parser {
     size_t loc = 0;
   
     for ( size_t r = 0; r < rule.size(); ++r ) {
-      if ( rule[r] == '(' ) {
+      if ( rule[r] == '(' ) { // OPEN PAREN
 	// find closing paren
 	auto mp_ret = match_parens( r, rule );
 	if ( mp_ret.second.size() == 0 ) {
@@ -348,7 +352,7 @@ namespace psil_parser {
 	  ret.clear();
 	  return ret;
 	}
-      } else if ( rule[r] == '<' ) {
+      } else if ( rule[r] == '<' ) { // OPEN RULE
 	// find closing bracket and tokenize
 	if ( (loc = rule.find_first_of(">", r)) != std::string::npos ) {
 	  int x = 0;
@@ -362,7 +366,7 @@ namespace psil_parser {
 	  ret.clear();
 	  return ret;
 	}
-      } else if ( rule[r] == '{' ) {
+      } else if ( rule[r] == '{' ) { // OPEN REGEX
 	// complete regex
 	loc = r+1;
 	for ( ; loc < rule.size(); ++loc ) {
@@ -380,7 +384,7 @@ namespace psil_parser {
 	  ret.push_back( tmp );
 	  r = rule.size();
 	}
-      } else if ( rule[r] != ' ' ) {
+      } else if ( rule[r] != ' ' ) { // WHITESPACE
 	// find next space and tokenize
 	loc = r+1;
 	for ( ; loc < rule.size(); ++loc ) {
@@ -411,7 +415,7 @@ namespace psil_parser {
     size_t loc = 0;
   
     for ( size_t i = 0; i < input.size(); ++i ) {
-      if ( input[i] == '('  ) {
+      if ( input[i] == '('  ) { // OPEN PAREN
 	// find closing paren
 	auto mp_ret = match_parens( i, input );
 	if ( mp_ret.second.size() == 0 ) {
@@ -427,7 +431,7 @@ namespace psil_parser {
 	  ret.clear();
 	  return ret;
 	}
-      } else if ( input[i] != ' ' ) {
+      } else if ( input[i] != ' ' ) { // WHITESPACE
 	// find next space and tokenize
 	loc = i+1;
 	for ( ; loc < input.size(); ++loc ) {
@@ -470,9 +474,6 @@ namespace psil_parser {
       if ( rule[ru_itr] == "(" || rule[ru_itr]  == ")" ||
 	   rule[ru_itr] == "[" || rule[ru_itr]  == "]" ) {
 	if ( rule[ru_itr] == input[in_itr] ) {
-#ifdef DEBUG_MODE
-	  std::cerr << "MATCHED PAREN" << pn << std::endl;
-#endif
 	  // Add result to token
 	  std::unique_ptr<token_elem_t> tke( new token_elem_t( input[in_itr] ) );
 	  tptr->aspects.push_back( std::move(tke) );
@@ -480,9 +481,6 @@ namespace psil_parser {
 	  ++ru_itr; ++in_itr;
 	  continue;
 	} else {
-#ifdef DEBUG_MODE
-	  std::cerr << "Exit PAREN" << pn << std::endl;
-#endif
 	  return nullptr;
 	}
       }
@@ -495,23 +493,14 @@ namespace psil_parser {
 	  if ( input[in_itr] == "(" ) {
 	    auto p_loc = match_parens( in_itr, input );
 	    if ( p_loc.second.size() == 0 ) {
-#ifdef DEBUG_MODE
-	      std::cerr << "Broke" << in_itr << " " << p_loc.first << pn <<std::endl;
-#endif
 	      new_pt = std::make_pair( in_itr, p_loc.first );
 	    } else {
-#ifdef DEBUG_MODE
-	      std::cerr << "Exit Could not find matching paren" << pn << std::endl;
-#endif
 	      return nullptr;
 	    }
 	  } else {
 	    new_pt = std::make_pair( in_itr, in_itr );
 	  }
 	
-#ifdef DEBUG_MODE
-	  std::cerr << "RECURSION" << pn << "->" << next_p->name << std::endl;
-#endif
 	  auto new_ret = apply_parser( lang, next_p, input, new_pt, new_match );
 
 	  if ( rule[ru_itr].back() == '*' ) {
@@ -534,9 +523,6 @@ namespace psil_parser {
 	    in_itr = new_pt.second+1;
 	    continue;
 	  } else {
-#ifdef DEBUG_MODE
-	    std::cerr << "Exit No recursion match" << pn << std::endl;
-#endif
 	    if ( try_again ) {
 	      try_again = false;
 	      ++ru_itr;
@@ -545,9 +531,6 @@ namespace psil_parser {
 	    return nullptr;
 	  }
 	} else {
-#ifdef DEBUG_MODE
-	  std::cerr << "Exit No rule found" << pn << std::endl;
-#endif
 	  throw std::string("Error: Rule not found" + rule[ru_itr]);
 	  return nullptr;
 	}
@@ -555,33 +538,21 @@ namespace psil_parser {
       // Check for regex
       else if ( is_regex( rule[ru_itr] ) ) {
 	if ( match_regex( rule[ru_itr], input[in_itr] ) ) {
-#ifdef DEBUG_MODE
-	  std::cerr << "REGEX_MATCH" << pn << std::endl;
-#endif
 	  std::unique_ptr<token_elem_t> tke( new token_elem_t( input[in_itr] ) );
 	  tptr->aspects.push_back( std::move(tke) );
 	  ++ru_itr; ++in_itr;
 	} else {
-#ifdef DEBUG_MODE
-	  std::cerr << "Exit no regex match" << pn << std::endl;
-#endif
 	  return nullptr;
 	}
       }
       // Check for exactness
       else if ( rule[ru_itr] == input[in_itr] ) {
-#ifdef DEBUG_MODE
-	std::cerr << "EXACT" << pn << std::endl;
-#endif
 	// Add result to current token
 	std::unique_ptr<token_elem_t> tke( new token_elem_t( input[in_itr] ) );
 	tptr->aspects.push_back( std::move(tke) );
 	++ru_itr; ++in_itr;
 	continue;
       } else {
-#ifdef DEBUG_MODE
-	std::cerr << "Exit Not exact" << pn << std::endl;
-#endif
 	return nullptr;
       }
     
@@ -596,9 +567,6 @@ namespace psil_parser {
   apply_parser( const std::unique_ptr<language_t> & lang,
 		parser_t * par, str_vec input_tks,
 		upoint pt, bool& match ) {
-#ifdef DEBUG_MODE
-    std::cerr << "APPLYING PARSER" << par->name << std::endl;
-#endif
     bool new_match = false;
     for ( str_vec rule : par->rules ) {
       auto ret = match_rule( lang, par->name, rule, input_tks, pt, new_match );
@@ -610,7 +578,7 @@ namespace psil_parser {
   // === Parsing driver function
   std::unique_ptr<token_t>
   parse( const std::unique_ptr<language_t> & lang, std::string input ) {
-
+    // Check for issues
     if ( input.size() == 0 ) {
       std::cerr << "Empty input" << std::endl;
       return nullptr;
@@ -623,9 +591,6 @@ namespace psil_parser {
     bool match = false;
     // === Split input into tokens ===
     str_vec input_tokens = tokenize_input( input );
-#ifdef DEBUG_MODE
-    print_vec( input_tokens );
-#endif
     upoint pt = std::make_pair( 0, input_tokens.size()-1 );
 
     try {
@@ -687,7 +652,8 @@ namespace psil_parser {
 				   "| null? | ch_lt | ch_lte | ch_gt | ch_gte | ch_eq | decimal?"
 				   "| lt | lte | gt | gte | eq | append | insert | pop | integer?"
 				   "| boolean? | number? | character? | symbol? | proc? | list?"
-				   "| abs | mod | print | println | read | quote | unquote" ) );
+				   "| abs | mod | print | println | newline | read "
+				   "| quote | to_quote | unquote" ) );
     
       group_t * gda = lang->add( new group_t( "DATA" ) );
       lang->add( gda, new parser_t( "<list_def>", "(quote <datum>)" ) );
@@ -710,7 +676,7 @@ namespace psil_parser {
     } catch ( std::string exp ) {
       std::cerr << "Error: While creating language" << std::endl;
       std::cerr << exp << std::endl;
-      exit(1);
+      exit(1); // Exit, fatal error
     }
     return nullptr;
   }
