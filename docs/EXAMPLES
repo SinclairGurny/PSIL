@@ -24,12 +24,12 @@ factorial.psil
 fast_fib.psil
   Determines the fibonacci value at specific indices.
   Uses a faster recursive method than fibonacci.psil,
-  Runs in less than 0.25s, on my computer.
+  Runs in less than 0.25s, on my computer in debug mode.
 
 fibonacci.psil
   Determines the fibonacci value at specific indices.
   Uses the common recursive method, very slow.
-  Runs in > 3.5s, on my computer.
+  Runs in > 3.5s, on my computer in debug mode.
 
 first_order_procs.psil
   Shows several examples of first order procedures.

@@ -41,6 +41,8 @@ namespace psil_exec {
     //              <character>           value
     return psil_char( num->aspects.front()->str );
   }
+
+  // =================== Comparison Functions =======================================
   
   // Apply a comparison operation
   void psil_num_compare( token_ptr & node,

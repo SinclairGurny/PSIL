@@ -4,7 +4,7 @@
    Type checks and
    Type conversion implementations
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 
@@ -12,6 +12,7 @@
 
 namespace psil_exec {
 
+  // === If the node contains the type t, return true, else false
   void psil_type_check( token_ptr & node, VarType t ) {
     auto app = node->aspects.front()->tk.get();
     bool is_type = check_type( app->aspects[2]->tk ) == t;
@@ -20,6 +21,7 @@ namespace psil_exec {
   }
 
 
+  // === If the node contains the type of number signified by int_or_dec return true
   void psil_num_check( token_ptr & node, bool int_or_dec ) {
     auto app = node->aspects.front()->tk.get();
     if ( check_type( app->aspects[2]->tk ) != VarType::NUM ) {

@@ -10,8 +10,7 @@
 
 namespace psil_exec {
 
-
-  // Take function name and apply correct function
+  // === Take function name and apply correct function
   void apply_global_proc( stack_ptr & s, token_ptr & node, bool& rem, std::string fun ) {
     size_t arg_count = node->aspects.front()->tk->aspects.size()-3;
     // ==============================  Input / Output ===================================
@@ -245,7 +244,7 @@ namespace psil_exec {
 
   // ================= INPUT / OUTPUT ==========================================================
 
-  // converts psil character to char
+  // === Converts psil character to char
   std::string psil_char( std::string ch ) {
     if ( ch.size() > 3 ) {
       if ( ch == "#\\newline" ) {
@@ -267,7 +266,7 @@ namespace psil_exec {
     return ch.substr(2);
   }
 
-  // converts char to psil character
+  // === Converts char to psil character
   std::string psil_char( char c ) {
     std::string val;
     switch ( c ) {
@@ -299,7 +298,7 @@ namespace psil_exec {
     return val;
   }
 
-  // Converts token back into printable string
+  // === Converts token back into printable string
   std::string tk_to_string( token_ptr & tk ) {
     if ( tk->type_name == "<constant>" || tk->type_name == "<datum>" ) {
       auto const_type = tk->aspects.front()->tk.get();
@@ -342,7 +341,7 @@ namespace psil_exec {
     return "";
   }
 
-  // Prints constant types to string
+  // === Prints constant types to string
   void print( token_ptr & node, bool newline ) {
     size_t idx = 0;
     for ( auto itr = node->aspects.begin(); itr != node->aspects.end(); ++itr, ++idx ) {
@@ -357,7 +356,7 @@ namespace psil_exec {
       std::cout << std::endl;
   }
 
-  // Reads from cin, converts string to list or characters
+  // === Reads from cin, converts string to list or characters
   void psil_read( token_ptr & node ) {
     std::string str;
     std::cin >> str;
@@ -373,7 +372,8 @@ namespace psil_exec {
     auto tmp_bot = std::make_unique<psil_parser::token_t>("<list>");
     // Add starting paren to list
     tmp_bot->aspects.push_back( std::make_unique<psil_parser::token_elem_t>("(") );
-    
+
+    // === Convert string to (quote (<character>+))
     for ( char c : str ) {
       std::string val;
       val = psil_char( c );

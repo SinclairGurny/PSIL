@@ -114,6 +114,7 @@ namespace psil_exec {
   }
 
 
+  // === Checks an expression to see if it is a true value
   bool is_true( stack_ptr & s, token_ptr & node ) {
     if ( node->aspects.size() == 1 && node->aspects.front()->elem_type == TE_Type::TOKEN ) {
       if ( node->aspects.front()->tk->type_name == "<constant>" ) {
@@ -140,7 +141,9 @@ namespace psil_exec {
     exec( s, node, r );
     return is_true( s, node );
   }
-  
+
+  // === Checks a number and compares its value to 0.
+  // returns false if decimal is of form 0.00000, more accurate to use 'eq'
   bool is_zero( token_ptr & node ) {
     if ( node->aspects.front()->tk->type_name == "<integer>" ) {
       auto int_tk = node->aspects.front()->tk.get();
