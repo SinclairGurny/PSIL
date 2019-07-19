@@ -1,0 +1,69 @@
+==============================================================================================
+===  Code Example Explanations  ==============================================================
+==============================================================================================
+
+closure.psil
+  Addtwo returns a closure, the closure is saved to the name addone.
+  The result of the code is 15.
+
+count.psil
+  Counts from 0 to 9, then prints Done.
+
+echo.psil
+  Prints whatever the user enters.
+  Program exits upon entering "quit".
+  Val is used to store the user's input, but remains in scope
+  throughout the recursion, so must be updated.
+  str_print is used to print a list of characters without the '().
+
+factorial.psil
+  Determines the factorial of several numbers.
+  Running factorial on numbers higher than 20 produces integer
+  overflow.
+
+fast_fib.psil
+  Determines the fibonacci value at specific indices.
+  Uses a faster recursive method than fibonacci.psil,
+  Runs in less than 0.25s, on my computer.
+
+fibonacci.psil
+  Determines the fibonacci value at specific indices.
+  Uses the common recursive method, very slow.
+  Runs in > 3.5s, on my computer.
+
+first_order_procs.psil
+  Shows several examples of first order procedures.
+  Uses operators, global procedures, and local procedures (lambdas).
+
+hello.psil
+  Prints "Hello, World!".
+
+metapgrogramming.psil
+  Show examples of metaprogramming.
+  The code takes the procedure f, and switches the order of the
+  expressions in the body, and calls the result g. Then takes
+  the procedure f, and switches the order of the arguments,
+  and calls the result h.
+  Therefore the original function, given the arguments #\H #\i outputs
+  1 H
+  2 i
+  g outputs
+  2 i
+  1 H
+  h outputs
+  1 i
+  2 H
+
+quoting.psil
+  Shows examples of quoting and unquoting.
+
+quoting2.psil
+  Shows more examples of quoting and unquoting.
+
+scoping.psil
+  Shows examples of valid scopings of variables.
+
+test_math.psil
+  Complete test of every case of the arithmetic operators (+, -, *, /).
+  +, -, *: When ANY argument is a decimal the result is a decimal
+  /: Always returns a decimal

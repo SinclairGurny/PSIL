@@ -321,15 +321,25 @@ namespace psil_exec {
   // =============== QUOTE =========================================
   // Convert expressions into datums
   void psil_quote( stack_ptr & s, token_ptr & node ) { // TODO remove s
+    
     // === Convert datum into code string ===
     auto app = node->aspects.front()->tk.get();
+    if ( app->aspects[2]->tk->aspects.front()->elem_type == TE_Type::TOKEN &&
+	 app->aspects[2]->tk->aspects.front()->tk->type_name == "<variable>" ) {
+      bool r = false;
+      try {
+	exec_var( s, app->aspects[2]->tk, r );
+      } catch ( ... ) {
+	if ( r ) throw std::string( "ERROR" );
+      }
+    }
     //            <application>    arg <exp..>         element
     auto arg_elem = app->aspects[2]->tk->aspects.front().get();
     std::string datum_code = arg_elem->tk->to_code();
     // Quote expression
-    //datum_code = "(quote " + datum_code + ")";
-    //std::cout << datum_code << std::endl;
-
+    datum_code = "(quote " + datum_code + ")";
+    std::cout << datum_code << std::endl;
+    
     // === UNQUOTE ===
     try {
       // Remake PSIL
@@ -339,7 +349,7 @@ namespace psil_exec {
       if ( !ast ) { throw 1; } // Error while parsing
       // DEBUG
       //ast->print();
-      //std::cout << ast->to_code() << std::endl;
+      std::cout << ast->to_code() << std::endl;
       
       // === Run eval library to check for error ===
       bool e = psil_eval::check_node( ast.get() );

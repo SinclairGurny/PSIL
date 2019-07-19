@@ -1,0 +1,8 @@
+(begin
+  (define f (lambda (op) (op 1 2)))
+  (define g (lambda (op) (op #\A #\Z)))
+  (define oper (lambda (a b) (append (append (quote ()) (to_quote a))
+				     (to_quote b))))
+  (println (f +) (f *))
+  (println (g ch_lt) (g equal?))
+  (println (f oper) (g oper)))

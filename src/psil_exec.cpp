@@ -363,7 +363,8 @@ namespace psil_exec {
   }
   
   // ===================================================================================
-  
+
+  // === Run, Evaluate, Print, ...
   void repl( const std::unique_ptr<psil_parser::language_t> & lang, std::string input ) {
     
     auto ast = psil_parser::parse( lang, input );
@@ -396,7 +397,7 @@ namespace psil_exec {
     // === Open file ===
     std::ifstream code( filename );
     if ( !code.good() ) {
-      std::cerr << "Could not open file" << std::endl;
+      std::cerr << "Could not open file: " << filename << std::endl;
       return;
     }
     // === Combine into string ===
@@ -458,7 +459,8 @@ namespace psil_exec {
 	if ( expr->type_name == "<constant>" ) {
 	  return;
 	} else if ( expr->type_name == "<variable>" ) {
-	  exec_var( s, ast, rem );
+	  bool g = exec_var( s, ast, rem );
+	  if ( g ) return;
 	} else if ( expr->type_name == "<lambda>" ) {
 	  return;
 	} else if ( expr->type_name == "<conditional>" ) {
@@ -499,6 +501,7 @@ namespace psil_exec {
 	s->pop();
 	return;
       } else {
+	ast->print();
 	throw std::string( "Unknown expression type" );
       }	
     } else if ( ast->type_name == "<definition>" ) {
@@ -549,50 +552,56 @@ namespace psil_exec {
       auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
       auto ret = s->exists( iden );
       if ( ret == stack_t::ExistsType::GLOBAL ) {
-	throw std::string( "Cannot redefine a global procedure" );
+	throw std::string( "Cannot redefine a global procedure "+iden );
       } else if ( ret == stack_t::ExistsType::LOCAL ) {
-	throw std::string( "Cannot redefine a local variable, use update" );
+	throw std::string( "Cannot redefine a local variable, use update "+iden );
       } else { // NO - variable is not known
 	bool r = false;
 	exec( s, node->aspects[3]->tk, r);
-	if ( r ) throw std::string( "Update error" );
+	if ( r ) throw std::string( "Update error "+iden );
 	s->add( iden, node->aspects[3]->tk );
       }
     } else if ( node->aspects[1]->str == "update" ) {
       auto iden = node->aspects[2]->tk->aspects.front()->tk->aspects.front()->str;
       auto ret = s->exists( iden );
       if ( ret == stack_t::ExistsType::GLOBAL ) {
-	throw std::string( "Cannot set! a global procedure" );
+	throw std::string( "Cannot update a global procedure "+iden );
       } else if ( ret == stack_t::ExistsType::LOCAL ) {
 	bool r = false;
 	exec( s, node->aspects[3]->tk, r);
-	if ( r ) throw std::string( "Update error" );
+	if ( r ) throw std::string( "Update error "+iden );
 	s->update( iden, ret, node->aspects[3]->tk );
       } else { // NO - variable is not known
-	throw std::string( "Cannot set a variable that has not been defined" );
+	throw std::string( "Cannot set a variable that has not been defined "+iden );
       }
     } else {
+      node->print();
       throw std::string( "Unknown definition type" );
     }
   }
 
   // === Execute variable expansion
-  void exec_var( stack_ptr & s, token_ptr & node, bool& rem ) {
-    auto var_name = node->aspects.front()->tk->aspects.front()->tk->aspects.front()->str;
+  bool exec_var( stack_ptr & s, token_ptr & node, bool& rem ) {
+    auto var = node->aspects.front()->tk->aspects.front()->tk->aspects.front().get();
+    std::string var_name;
+    if ( var->elem_type == TE_Type::TOKEN )
+      var_name = var->tk->aspects.front()->str;
+    else
+      var_name = var->str;
+    // Lookup varible name
     auto ret = s->exists( var_name );
     if ( ret == stack_t::ExistsType::GLOBAL ) {
-      std::cerr <<  "Cannot access global procedures yet" << std::endl;
-      rem = true;
+      // Leave it alone
+      return true;
     } else if ( ret == stack_t::ExistsType::LOCAL ) {
       auto value = s->get( var_name, ret );
       node.reset(); // erase current token
       node = std::move( value ); // replace with value
     } else { // NO - variable is not known
-      throw std::string( "Variable does not exist" );
+      throw std::string( "Variable does not exist: "+var_name );
     }
+    return false;
   }
-  
-
 
   // === Execute application of procedures
   void exec_app( stack_ptr & s, token_ptr & node, bool & rem ) {

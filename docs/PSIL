@@ -1,3 +1,6 @@
+==============================================================================================
+=== PSIL Syntax Details  =====================================================================
+==============================================================================================
 
 PSIL Syntax:
 <program> -> <form>
@@ -90,7 +93,7 @@ DEFINITION / ASSIGNMENT:
     but not overwrite global procedure names
 
 FUNCTIONS:
-(lambda (<variables> ...) <...>)
+(lambda (<variables> ...) <expression>)
     Create unnamed function binding specific variables
 
 DECISIONS:
@@ -149,7 +152,7 @@ LISTS:
     remove the corresponding place in a list
   (null? l)
     check if the list is null (quote ())
-  (quote x)
+  (to_quote x)
     converts x into a list
   (unquote x)
     removes the quote from the argument

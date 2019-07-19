@@ -153,7 +153,6 @@ namespace psil_exec {
   */
   void exec_cond( stack_ptr & s, token_ptr & node, bool& rem );
 
-  
   /**
      Executes the definition given
      Assumes the node given is the definition token
@@ -161,8 +160,8 @@ namespace psil_exec {
   */
   void exec_def( stack_ptr & s, token_ptr & node  );
 
-  //   Replaces variables with their value
-  void exec_var( stack_ptr & s, token_ptr & node, bool& rem );
+  //   Replaces variables with their value, returns true if global procedure name
+  bool exec_var( stack_ptr & s, token_ptr & node, bool& rem );
 
     /**
      Executes the application of procedures
