@@ -1,0 +1,4 @@
+(begin
+  (define q (quote (+ 1)))
+  (define p (append q (quote 2)))
+  (println (unquote p)))

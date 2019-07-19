@@ -1,6 +1,6 @@
 (begin
  (define main (lambda (n)
-		(if (equal? n 10)
+		(if (eq n 10)
 		 (println #\D #\o #\n #\e)
 		 (begin
 		   (println n)

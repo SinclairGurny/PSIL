@@ -2,7 +2,7 @@
    psil_parser.h
    PSIL Parser library 
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 
@@ -37,9 +37,7 @@ namespace psil_parser {
      Token Element
      Holds either a string or another token
      Is used in the aspects vector in the token struct
-     type: 
-     true - object holds a string in str
-     false - object holds a token in tk
+     elem_type signifies which type is contained within element
   */
   struct token_elem_t {
     token_elem_t( std::string s ) : elem_type(STRING), str(s) {}
@@ -55,13 +53,13 @@ namespace psil_parser {
   /**
      Token
      Represents the nodes in the abstract syntax tree
-
-     type: represents the variety of token, ie: noun, adjective, etc
+     type_name: category derived from parser in parsing syntax tree
   */
   struct token_t {
     token_t( std::string t ) : type_name(t) {}
     
     void print();
+    std::string to_code();
     
     std::string type_name;
     std::vector<std::unique_ptr<token_elem_t> > aspects;
@@ -72,7 +70,7 @@ namespace psil_parser {
   
   /**
      Parser
-     Holds list of rules for each named leaf 
+     Holds list of rules for each named
        category of the language tree
   */
   struct parser_t {
@@ -107,10 +105,7 @@ namespace psil_parser {
      Language Element
      Holds either a parser or a group
      Used in items map of language struct and group struct
-
-     type:
-     true -> holds parser in p
-     false -> holds group in g
+     elem_type: signifies what type is contained within elem
   */
   struct lang_elem_t {
     lang_elem_t( parser_t * _p ) : elem_type(PARSER), p(_p) {}
@@ -131,15 +126,14 @@ namespace psil_parser {
   struct language_t {
     language_t( std::string n ) : name(n), items(), all_parsers() {}
 
-
     parser_t * add( parser_t * p );
-    group_t * add( group_t * g );
-    parser_t * add( group_t * g, parser_t * p );
-    group_t * add( group_t * g_up, group_t * g_down );
+    group_t  * add( group_t  * g );
+    parser_t * add( group_t  * g,   parser_t * p );
+    group_t  * add( group_t  * g_up, group_t * g_down );
 
     parser_t * get_parser( std::string pn ) const;
 
-    std::vector<parser_t * > get_top_parsers() const;
+    std::vector<parser_t*> get_top_parsers() const;
 
     void print() const;
 
@@ -153,8 +147,7 @@ namespace psil_parser {
   // ========================================================================================================
 
   /**
-     Print out contents of vector of strings
-     
+     Print out contents of a vector of strings     
      @param v - vector to be printed
      @param newline - default to true, whether to add newline after printing
   */
@@ -165,7 +158,6 @@ namespace psil_parser {
   /**
      Checks if the input is a rule that can be expanded
      within angle brackets ex: <name>
-
      @param input - string to be checked
      @return whether the input string is a rule
   */
@@ -174,7 +166,6 @@ namespace psil_parser {
   /**
      Checks if the input is a regex expression
      within curly braces ex: {[a-z]}
-
      @param input - string to be checked
      @return whether the input string is a regex
   */
@@ -182,7 +173,6 @@ namespace psil_parser {
 
   /**
      Takes if the input matches the regex expression
-
      @param expression - string that has been proven to be a regex
      @param input - string to be matched against the regex
      @return whether the regex matches the entire input string
@@ -191,7 +181,6 @@ namespace psil_parser {
 
   /**
      Verifies the entire input string has matching parens
-
      @param input - string to be checked
      @return whether the input string has matching parens
   */
@@ -199,7 +188,6 @@ namespace psil_parser {
 
   /**
      Find next matching paren of same type
-     
      @param start - starting index of open paren
      @param input - structure to be searched
      @return pair of size_t a and string b
@@ -213,7 +201,6 @@ namespace psil_parser {
 
   /**
      Break parser's rule into tokens
-
      @param rule - rule to be tokenized
      @return vector of tokens, written as strings
   */
@@ -221,7 +208,6 @@ namespace psil_parser {
 
   /**
      Break user input string into tokens
-
      @param input - string to be tokenized
      @return vector of tokens, written as string
   */
@@ -230,7 +216,6 @@ namespace psil_parser {
   /**
      Convert user's tokenized input to tokens
      by using rules from the language
-     
      @param lang - pointer to language being used to parse
      @param pn - name of parser
      @param rule - tokenized rule, vector of strings
@@ -246,7 +231,6 @@ namespace psil_parser {
 
   /**
      Calls all rules of a parser
-     
      @param lang - pointer to language being used to parse
      @param par - parser to be applied
      @param input_tks - tokenized user input, vector of strings
@@ -261,7 +245,6 @@ namespace psil_parser {
   /**
      Primary parsing driver function
      Tokenizes input and calls apply_parser on all top level parsers
-
      @param lang - pointer to language being used to parse
      @param input - string of user input
      @return pointer to abstract syntax tree if success, otherwise nullptr
@@ -272,7 +255,6 @@ namespace psil_parser {
 
   /**
      Creates PSIL language
-
      @returns pointer to language object
   */
   std::unique_ptr<language_t> make_psil_lang();

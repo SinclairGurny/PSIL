@@ -1,0 +1,6 @@
+(begin
+  (define a (quote (if (equal? b c))))
+  (define b (quote (println #\N)))
+  (define c (quote (println #\Y)))
+  (unquote (append (append a b) c))
+  (unquote (append (append a c) b)))

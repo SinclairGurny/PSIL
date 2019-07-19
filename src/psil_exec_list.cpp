@@ -3,7 +3,7 @@
    PSIL Execution Library
    Global list function implementations
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 
@@ -61,7 +61,6 @@ namespace psil_exec {
       throw std::string( "Out of bounds" );
     } else {
       auto elem = std::move( list->aspects[pos+1]->tk );
-      elem->print();
       // Update datum
       list_def->aspects[2]->tk = std::move( elem );
       // Return updated list
@@ -251,13 +250,13 @@ namespace psil_exec {
       throw std::string( "list operation procedure argument must be list" );
     }
 
-    // Second argument is a list
+    // Second argument is a number
     if ( check_type( app->aspects[3]->tk ) != VarType::NUM ) {
       throw std::string( "list operation procedure argument 2 must be number" );
     }
     // Convert argument to a integer value
     //     <application>     <expression>         <constant>          <number>
-    auto num = app->aspects[4]->tk->aspects.front()->tk->aspects.front()->tk.get();
+    auto num = app->aspects[3]->tk->aspects.front()->tk->aspects.front()->tk.get();
     if ( num->aspects.front()->tk->type_name != "<integer>" ) {
       throw std::string( "Index must be integer" );
     }
@@ -320,12 +319,101 @@ namespace psil_exec {
   }
 
   // =============== QUOTE =========================================
-  void psil_quote( stack_ptr & s, token_ptr & node ) {
-    // take structure and convert to datums
-    // use parser?
+  // Convert expressions into datums
+  void psil_quote( stack_ptr & s, token_ptr & node ) { // TODO remove s
+    
+    // === Convert datum into code string ===
+    auto app = node->aspects.front()->tk.get();
+    if ( app->aspects[2]->tk->aspects.front()->elem_type == TE_Type::TOKEN &&
+	 app->aspects[2]->tk->aspects.front()->tk->type_name == "<variable>" ) {
+      bool r = false;
+      try {
+	exec_var( s, app->aspects[2]->tk, r );
+      } catch ( ... ) {
+	if ( r ) throw std::string( "ERROR" );
+      }
+    }
+    //            <application>    arg <exp..>         element
+    auto arg_elem = app->aspects[2]->tk->aspects.front().get();
+    std::string datum_code = arg_elem->tk->to_code();
+    // Quote expression
+    datum_code = "(quote " + datum_code + ")";
+    std::cout << datum_code << std::endl;
+    
+    // === UNQUOTE ===
+    try {
+      // Remake PSIL
+      auto lang = psil_parser::make_psil_lang();
+      // Parse code
+      auto ast = psil_parser::parse( lang, datum_code );
+      if ( !ast ) { throw 1; } // Error while parsing
+      // DEBUG
+      //ast->print();
+      std::cout << ast->to_code() << std::endl;
+      
+      // === Run eval library to check for error ===
+      bool e = psil_eval::check_node( ast.get() );
+      if ( !e ) { throw 1; } // Error while evaluating
+      
+      // === Take result and update AST ===
+      //       <program>            <form>               <expression>
+      auto tmp = std::move( ast->aspects.front()->tk->aspects.front()->tk );
+      node = std::move( tmp );
+    } catch ( ... ) {
+      throw std::string( "Error while unquoting" );
+    }
   }
+
+  // Convert datums into expressions
   void psil_unquote( stack_ptr & s, token_ptr & node ) {
-    // take datums and convert to structure
-    // use parser?
+    // === Verify argument is correct type ===
+    auto app = node->aspects.front()->tk.get();
+    auto arg_elem = app->aspects[2]->tk->aspects.front().get();
+    if ( arg_elem->elem_type != TE_Type::TOKEN ||
+	 arg_elem->tk->type_name != "<constant>" ||
+	 arg_elem->tk->aspects.front()->tk->type_name != "<list_def>" ) {
+      throw std::string( "unquote argument must be quoted" );
+    }
+
+    // === Convert datum into code string ===
+    auto qt_arg = arg_elem->tk->aspects.front()->tk.get();
+    std::string datum_code = qt_arg->aspects[2]->tk->to_code();
+    // Place code within application to make sure resulting AST
+    //  is an expression
+    datum_code = "(" + datum_code + ")";
+    //std::cout << datum_code << std::endl;
+
+    // === UNQUOTE ===
+    try {
+      // Remake PSIL
+      auto lang = psil_parser::make_psil_lang();
+      // Parse code
+      auto ast = psil_parser::parse( lang, datum_code );
+      if ( !ast ) { throw 1; } // Error while parsing
+      // DEBUG
+      //ast->print();
+      //std::cout << ast->to_code() << std::endl;
+      
+      // === Run eval library to check for error ===
+      bool e = psil_eval::check_node( ast.get() );
+      if ( !e ) { throw 1; } // Error while evaluating
+      
+      // === Take result and update eAST ===
+      //       <program>            <form>               <expression>
+      auto tmp = ast->aspects.front()->tk->aspects.front()->tk.get();
+      //               <expression>         <application>
+      auto ret = std::move( tmp->aspects.front()->tk );
+      // Place result into begin statement
+      node->aspects.clear();
+      node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( "(" ) );
+      node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( "begin" ) );
+      for ( auto itr = ret->aspects.begin(); itr != ret->aspects.end(); ++itr ) {
+	if ( (*itr)->elem_type == TE_Type::TOKEN )
+	  node->aspects.push_back( std::move( *itr ) );
+      }
+      node->aspects.push_back( std::make_unique<psil_parser::token_elem_t>( ")" ) );
+    } catch ( ... ) {
+      throw std::string( "Error while unquoting" );
+    }
   }
 }

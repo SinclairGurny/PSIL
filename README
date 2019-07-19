@@ -16,25 +16,28 @@ PSIL:
 Stands for Programming Some Idiotic Lisp.
 (It's actually based on Scheme Syntax)
 
-PSIL is a WIP interpreter for my own version of a LISP like language
+PSIL is a interpreter for my own version of a LISP like language
 
-Current version 0.9
--- Missing scoping of defined variables
+Current version 1.0
+For more information in docs/
 
 written by Sinclair Gurny
-Starting in July 2019
+July 2019
 
-================================================================================================
+=====================================================================
 
 Compiling:
 make - for normal
-make debug - full parsing output
-make debug_slow - full parsing output with delay
+make debug - for debugger friendly compilation
 make clean - delete unnecessary files
 
 Running:
-./psil
-./psil_debug
+./psil or ./psil_debug
+  Runs PSIL in REPL mode
+  Executes any code or command given.
+./psil <code.psil> or ./psil_debug <code.psil>
+  Runs PSIL in file mode,
+  PSIL executes the code in the given .psil file, then exits.
 
 REPL Commands:
 quit - exits
@@ -42,12 +45,22 @@ exit - also exits
 help - displays commands
 psil - displays syntax of current version of PSIL
 
-=======================================================
+=====================================================================
 
 Examples:
+See examples/ for more.
+For explanations of the examples see docs/EXAMPLES.
 
 Hello World Program:
 >> (print #\H #\e #\l #\l #\o #\, #\space #\W #\o #\r #\l #\d #\!)
 
 Hello, World!
 
+>> (begin
+     (define fact (lambda (n)
+                    (if (equal? n 1)
+		        1
+			(* n (fact (- n 1))))))
+     (fact 10))
+
+3628800

@@ -1,0 +1,10 @@
+(begin
+  (define a 0)
+  (begin
+    (define b 0)
+    (println b))
+  (begin
+    (define b 1)
+    (println b))
+  (define b 2)
+  (println a b))

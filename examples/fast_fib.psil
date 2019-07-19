@@ -1,0 +1,16 @@
+(begin
+  (define fast_fib (lambda (n a b)
+		(if (eq n 0)
+		    a
+		    (fast_fib (- n 1) b (+ a b)))))
+  (define fib (lambda (num) (fast_fib num 0 1)))
+  (println (fib 1))
+  (println (fib 2))
+  (println (fib 3))
+  (println (fib 4))
+  (println (fib 5))
+  (println (fib 10))
+  (println (fib 20))
+  (println (fib 25))
+  (println (fib 30))
+  (println (fib 50)))

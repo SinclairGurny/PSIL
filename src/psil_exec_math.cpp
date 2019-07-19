@@ -3,7 +3,7 @@
    PSIL Execution Library
    Global Math function implementations
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 

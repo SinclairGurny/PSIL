@@ -1,8 +1,14 @@
-(begin	(define val #f)
-	(define main (lambda () (begin
-		(update val (read))
-		(println val)
-		(cond (not (equal? val (quote (#\q #\u #\i #\t))))
-		      (main)))))
-	(main))
+(begin
+  (define val (quote ()))
+  (define str_print (lambda (str)
+		      (cond (gt (length str) 0)
+			    (begin
+			      (print (unquote (nth str 0)))
+			      (str_print (pop str 0))))))
+  (define main (lambda () (begin
+			    (update val (read))
+			    (str_print val) (newline)
+			    (cond (not (equal? val (quote (#\q #\u #\i #\t))))
+				  (main)))))
+  (main))
 	      

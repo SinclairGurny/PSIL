@@ -1,0 +1,5 @@
+(begin
+  (define addtwo (lambda (a)
+		    (lambda (b) (+ a b))))
+  (define addone (addtwo 10))
+  (println (addone 5)))

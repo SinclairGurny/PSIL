@@ -1,6 +1,7 @@
 /* 
  * PSIL REPL code
  * Written by Sinclair Gurny
+ * Version 1.0
  * July 2019
  */
 
@@ -13,7 +14,7 @@
 // Other libaries
 #include <readline/readline.h>
 #include <readline/history.h>
-// PSIL Parser
+// PSIL
 #include "psil.h"
 
 // Handles Signals
@@ -36,11 +37,12 @@ int main( int argc, char ** argv ) {
     size_t pos = filename.find( ".psil" );
     if ( pos != std::string::npos && pos == filename.size()-5) {
       psil::run_file( psil_lang, filename );
+    } else {
+      std::cerr << "Invalid file given" << std::endl;
     }
     return 0;
   }
       
-
   
   std::cout << "\n***********************************************\n";
   std::cout << "***_______*****_________****_______****___******\n";
@@ -54,7 +56,7 @@ int main( int argc, char ** argv ) {
   std::cout << "     ***\\/_/*******\\/________/**\\/______/***\\/_______/*\n";
   std::cout << "      *************************************************\n\n";
   std::cout << "\"It's like LISP but not!\"\n\n";
-  std::cout << "==== PSIL REPL v0.9 =====\n";
+  std::cout << "==== PSIL REPL v1.0 =====\n";
   std::cout << "Press Ctrl+C to Exit\n" << std::endl;
 
     
@@ -68,7 +70,7 @@ int main( int argc, char ** argv ) {
     free(buffer);
     
     if ( tmp_buf == "exit" || tmp_buf == "quit") {
-      // === Delete memory and exit ===
+      // === Exit ===
       exit(0);
     } else if ( tmp_buf == "psil" ) {
       // === Display PSIL Syntax ===

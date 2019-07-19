@@ -1,0 +1,19 @@
+(begin
+  (define f (lambda (a b) (begin
+			    (println #\1 #\space a)
+			    (println #\2 #\space b))))
+  (define g (quote ()))
+  (define h (quote ()))
+  (define f_prime (to_quote f))
+  (begin
+    (define exp1 (nth (nth f_prime 2) 1)) (define exp2 (nth (nth f_prime 2) 2))
+    (define new_body (append (append (quote (begin)) exp2) exp1))
+    (update g (unquote (nth! f_prime new_body 2))))
+  (begin
+    (define arg1 (nth (nth f_prime 1) 0)) (define arg2 (nth (nth f_prime 1) 1))
+    (define new_args (append (append (quote ()) arg2) arg1))
+    (println arg1 arg2) (println new_args)
+    (update h (unquote (nth! f_prime new_args 1))))
+  (f #\H #\i) (newline)
+  (g #\H #\i) (newline)
+  (h #\H #\i))

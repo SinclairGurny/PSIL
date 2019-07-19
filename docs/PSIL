@@ -1,5 +1,8 @@
+==============================================================================================
+=== PSIL Syntax Details  =====================================================================
+==============================================================================================
 
-Syntax:
+PSIL Syntax:
 <program> -> <form>
 
 FORMS:
@@ -8,8 +11,8 @@ FORMS:
 DEFINITIONS:
 <definition>  -> (define <variable> <expression>)
 	      |  (update <variable> <expression>)
+	      
 <variable>    -> <identifier>
-
 
 EXPRESSIONS:
 <expression>  -> (begin <definition>* <expression>+)
@@ -22,7 +25,9 @@ EXPRESSIONS:
 <constant>    -> <boolean> | <number> | <character> | <list_def>
 
 <lambda>      -> (lambda <formals> <body>)
+
 <formals>     -> (<variable>*)
+
 <body>        -> <expression>
 
 <conditional> -> (cond <expression> <expression>)
@@ -32,7 +37,9 @@ EXPRESSIONS:
 
 IDENTIFIERS:
 <identifier>  -> <keyword> | <operator> | ^[a-zA-Z_](?!.) | ^[a-zA-Z_][a-zA-Z_0-9\!]+(?!.)
+
 <operator>    -> + | - | * | \
+
 <keyword>     -> define | update | lambda | if | cond | begin | set! | and | or | not
               |  equal? | floor | ceil | trunc | round | zero? | first | second | nth
 	      |  first! | second! | nth! | null? | lt | lte | gt | gte | eq 
@@ -42,20 +49,28 @@ IDENTIFIERS:
 
 DATA:
 <list_def>    -> (quote <datum>)
+
 <datum>	      -> <boolean> | <number> | <character> | <symbol> | <list>
+
 <boolean>     -> #t | #f
+
 <character>   -> #\<any char> | #\newline | #\space | #\oparen | #\cparen | #osqbrac | #csqbrac
+
 <symbol>      -> <identifier>
-<list>        -> () | (<datum>+)
+
+<list>        -> (<datum>*)
 
 NUMBERS:
 <number>      -> <integer> | <decimal>
+
 <integer>     -> 0 | starts with (-)maybe followed by digits
+
 <decimal>     -> 0.0 | starts with (-)maybe followed by digits . and more digits
 
 =====================================================================================================
 
-Primitive Types: ====================
+Primitive Types:
+====================
 
 boolean - represents true or false (#t or #f); #f and zero is false, everything else is true
 
@@ -67,7 +82,8 @@ number
 
 procedure - represents any lambda function
 
-Standard Forms: ===================
+Standard Forms:
+===================
 
 DEFINITION / ASSIGNMENT:
 (define <variable> <expression>)
@@ -77,7 +93,7 @@ DEFINITION / ASSIGNMENT:
     but not overwrite global procedure names
 
 FUNCTIONS:
-(lambda (<variables> ...) <...>)
+(lambda (<variables> ...) <expression>)
     Create unnamed function binding specific variables
 
 DECISIONS:
@@ -120,9 +136,6 @@ NUMBERS:
     (lt a b), (lte a b), (gt a b), (gte a b), (eq a b)
       where a and b are numbers and returns a boolean,
       equivalent to <, <=, >, >=, ==, respectively
-  MISC:
-    (zero? a)
-      returns whether the number is equal to zero
 
 CHARACTERS:
   ch_eq, ch_lt, ch_lte, ch_gt, ch_gte
@@ -139,14 +152,16 @@ LISTS:
     remove the corresponding place in a list
   (null? l)
     check if the list is null (quote ())
-  (quote x)
+  (to_quote x)
     converts x into a list
   (unquote x)
     removes the quote from the argument
 
 IDENTITY PREDICATES:
-  boolean?, symbol?, number?, character?, proc?, list?, integer?, decimal>
+  boolean?, symbol?, number?, character?, proc?, list?,
     checks type of variable
+  integer?, decimal?
+    checks exact type of number constant
 
 INPUT/OUTPUT:
   (print ...), (println ...)
@@ -154,5 +169,4 @@ INPUT/OUTPUT:
   (read type)
     grabs first value from stdin of type given
     returns a list of characters
-
 

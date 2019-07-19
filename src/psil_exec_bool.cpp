@@ -3,7 +3,7 @@
    PSIL Execution Library
    Boolean function implementations
    @author Sinclair Gurny
-   @version 0.9
+   @version 1.0
    July 2019
 */
 
@@ -11,6 +11,7 @@
 
 namespace psil_exec {
 
+  // Create and return a boolean constant expression
   token_ptr make_boolean( bool val ) {
     // Make expression
     auto tmp_exp = std::make_unique<psil_parser::token_t>( "<expression>" );
@@ -49,7 +50,6 @@ namespace psil_exec {
 	}
       }
     }
-
     auto ret_bool = make_boolean( ret );
     node = std::move( ret_bool );
   }
@@ -75,7 +75,7 @@ namespace psil_exec {
   // Performs logical negation on all arguments
   void psil_not( stack_ptr & s, token_ptr & node ) {
     bool ret = is_true( s, node->aspects.front()->tk->aspects[2]->tk );
-    auto ret_bool = make_boolean( ret );
+    auto ret_bool = make_boolean( !ret );
     node = std::move( ret_bool );
   }
 

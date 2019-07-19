@@ -7,4 +7,33 @@ The library is split into many different sections.
 The general abstract syntax tree execution code is implemented in psil_exec.cpp
 The other exec files are used to split up the related global procedure implementations.
 
-...
+Symbol table is the stack_t struct. The global procedures are stores within the global_table.
+The variables defined at runtime are stored in table. Table is a vector of symbol_table_t's.
+Each symbol_table_t is a map that lookups the information and value of a variable given its name.
+
+The stack is added to any time there is a (begin ...) statement. In begin statements variables can
+be defined and expressions can use them.
+
+The base exec function runs the abstract syntax tree. With smaller functions to run the different
+types of statements within the tree.
+For example: exec_if, exec_cond, exec_def, exec_var, exec_app, and apply_lambda.
+
+Each one of these functions performs a lazy evaluation of the code.
+
+PSIL is based on lambda functions and any form of repeated computation requires recursion.
+For example an infinite loop:
+(begin
+  (define f (lambda () (f)))
+  (f))
+
+==========================================
+
+When applying functions, if the function is globally defined then the corresponding function
+is called to perform the proper operations on the AST. However, if the function is locally defined,
+the lambda expression is applied. Lambda function in PSIL are not curried and will error if the correct
+arguments are not received.
+
+====
+Note:
+The full AST can be viewed easily using any tokens print() function, which displays the tree
+traversed breadth first. 
